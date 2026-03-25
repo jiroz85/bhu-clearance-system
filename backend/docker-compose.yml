@@ -1,0 +1,17 @@
+# Local PostgreSQL for development (`docker compose up -d`).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bhu-clearance-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bhu
+      POSTGRES_PASSWORD: bhu
+      POSTGRES_DB: bhu_clearance
+    ports:
+      - '5432:5432'
+    volumes:
+      - bhu_pg_data:/var/lib/postgresql/data
+
+volumes:
+  bhu_pg_data:

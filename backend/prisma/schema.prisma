@@ -1,0 +1,264 @@
+// BHU Clearance MVP — PostgreSQL via Prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  STAFF
+  ADMIN
+}
+
+enum ClearanceStatus {
+  DRAFT
+  SUBMITTED
+  PAUSED_REJECTED
+  FULLY_CLEARED
+  CANCELLED
+}
+
+enum StepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+}
+
+model University {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(64)
+  name      String   @unique @db.VarChar(180)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users              User[]
+  clearances         Clearance[]
+  clearanceSteps     ClearanceStep[]
+  departments        Department[]
+  workflows          ClearanceWorkflow[]
+  workflowSteps      WorkflowStep[]
+  certificates       Certificate[]
+  auditLogs          AuditLog[]
+  notifications      Notification[]
+
+  @@map("universities")
+}
+
+/// Application account (table `app_users`).
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  universityId String   @map("university_id") @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash")
+  role         Role     @default(STUDENT)
+  displayName  String?  @map("display_name") @db.VarChar(160)
+  /// BHU student ID (students only)
+  studentUniversityId String? @unique @map("student_university_id") @db.VarChar(64)
+  studentDepartment   String? @map("student_department") @db.VarChar(160)
+  studentYear         String? @map("student_year") @db.VarChar(32)
+  /// Must match `ClearanceStep.department` for the desk this staff serves
+  staffDepartment String? @map("staff_department") @db.VarChar(160)
+
+  clearancesAsStudent Clearance[] @relation("StudentClearances")
+  certificates         Certificate[] @relation("StudentCertificates")
+  reviews             Review[]
+  auditLogs           AuditLog[]  @relation("AuditActor")
+  notifications       Notification[]
+  university          University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([role])
+  @@index([staffDepartment])
+  @@index([universityId])
+  @@map("app_users")
+}
+
+model Clearance {
+  id               String           @id @default(uuid()) @db.Uuid
+  universityId     String           @map("university_id") @db.Uuid
+  studentUserId    String           @map("student_user_id") @db.Uuid
+  referenceId      String           @unique @map("reference_id") @db.VarChar(64)
+  status           ClearanceStatus  @default(DRAFT)
+  /// Next step in sequence (1–13) while workflow is active; null when idle/complete
+  currentStepOrder Int?             @map("current_step_order")
+  submittedAt      DateTime?        @map("submitted_at")
+
+  student User            @relation("StudentClearances", fields: [studentUserId], references: [id], onDelete: Cascade)
+  steps   ClearanceStep[]
+  certificate Certificate?
+  university  University  @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([studentUserId])
+  @@index([status])
+  @@index([universityId])
+  @@map("clearances")
+}
+
+model ClearanceStep {
+  id          String      @id @default(uuid()) @db.Uuid
+  universityId String     @map("university_id") @db.Uuid
+  clearanceId String      @map("clearance_id") @db.Uuid
+  stepOrder   Int         @map("step_order")
+  department  String      @db.VarChar(160)
+  status      StepStatus  @default(PENDING)
+  /// Latest review summary (e.g. rejection reason + instruction)
+  comment     String?     @db.Text
+  reviewedAt  DateTime?   @map("reviewed_at")
+
+  clearance Clearance @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@unique([clearanceId, stepOrder])
+  @@index([universityId])
+  @@index([clearanceId])
+  @@map("clearance_steps")
+}
+
+model Department {
+  id        String   @id @default(uuid()) @db.Uuid
+  universityId String @map("university_id") @db.Uuid
+  code      String   @unique @db.VarChar(64)
+  name      String   @unique @db.VarChar(160)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workflowSteps WorkflowStep[]
+  university    University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([universityId])
+  @@map("departments")
+}
+
+model ClearanceWorkflow {
+  id            String   @id @default(uuid()) @db.Uuid
+  universityId  String   @map("university_id") @db.Uuid
+  name          String   @db.VarChar(160)
+  version       Int
+  isActive      Boolean  @default(false) @map("is_active")
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  steps WorkflowStep[]
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([universityId])
+  @@unique([name, version])
+  @@map("clearance_workflows")
+}
+
+model WorkflowStep {
+  id          String      @id @default(uuid()) @db.Uuid
+  universityId String     @map("university_id") @db.Uuid
+  workflowId  String      @map("workflow_id") @db.Uuid
+  stepOrder   Int         @map("step_order")
+  departmentId String     @map("department_id") @db.Uuid
+  stepCode    String      @map("step_code") @db.VarChar(64)
+  stepName    String      @map("step_name") @db.VarChar(160)
+  isRequired  Boolean     @default(true) @map("is_required")
+
+  workflow   ClearanceWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  department Department        @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  university University        @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@unique([workflowId, stepOrder])
+  @@index([universityId])
+  @@map("workflow_steps")
+}
+
+model Review {
+  id               String         @id @default(uuid()) @db.Uuid
+  clearanceStepId  String         @map("clearance_step_id") @db.Uuid
+  reviewerUserId   String         @map("reviewer_user_id") @db.Uuid
+  decision         ReviewDecision
+  comment          String?        @db.Text
+  reason           String?        @db.Text
+  instruction      String?        @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  step     ClearanceStep @relation(fields: [clearanceStepId], references: [id], onDelete: Cascade)
+  reviewer User          @relation(fields: [reviewerUserId], references: [id], onDelete: Restrict)
+
+  @@index([clearanceStepId])
+  @@index([reviewerUserId])
+  @@map("reviews")
+}
+
+model Certificate {
+  id                 String   @id @default(uuid()) @db.Uuid
+  universityId       String   @map("university_id") @db.Uuid
+  clearanceId        String   @unique @map("clearance_id") @db.Uuid
+  studentUserId      String   @map("student_user_id") @db.Uuid
+
+  certificateNumber  String   @unique @map("certificate_number") @db.VarChar(64)
+  issuedAt           DateTime @map("issued_at")
+  generatedAt        DateTime @default(now()) @map("generated_at")
+
+  fileUrl            String   @map("file_url") @db.Text
+  checksumSha256     String   @map("checksum_sha256") @db.VarChar(64)
+
+  /// QR payload / verification code used for scanning + `/api/certificate/verify/:certificateNumber`.
+  verificationCode   String?  @map("verification_code") @db.Text
+
+  clearance Clearance @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
+  student   User      @relation("StudentCertificates", fields: [studentUserId], references: [id], onDelete: Restrict)
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([studentUserId])
+  @@index([universityId])
+  @@map("certificates")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  universityId String? @map("university_id") @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String   @db.VarChar(120)
+  entityType  String   @map("entity_type") @db.VarChar(64)
+  entityId    String   @map("entity_id") @db.VarChar(64)
+  details     Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  university University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  @@index([universityId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  universityId String @map("university_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(200)
+  body      String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([universityId])
+  @@index([userId, read])
+  @@map("notifications")
+}
