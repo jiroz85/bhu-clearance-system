@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: bhu-clearance-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bhu
+      POSTGRES_PASSWORD: bhu
+      POSTGRES_DB: bhu_clearance
+    ports:
+      - '5432:5432'
+    volumes:
+      - bhu_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bhu -d bhu_clearance']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bhu-clearance-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://bhu:bhu@postgres:5432/bhu_clearance
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      EMAIL_ENABLED: 'false'
+      FRONTEND_URL: http://localhost:3001
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
+    healthcheck:
+      test: ['CMD', 'node', 'health-check.js']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (for development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: bhu-clearance-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - '3001:3001'
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  bhu_pg_data:
+    driver: local

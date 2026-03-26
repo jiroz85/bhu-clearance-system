@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from './api';
-import { StudentDashboard } from './components/StudentDashboard';
-import { StaffDashboard } from './components/StaffDashboard';
-import { AdminPanel } from './components/AdminPanel';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api } from "./api";
+import { StudentDashboard } from "./components/StudentDashboard";
+import { StaffDashboard } from "./components/StaffDashboard";
+import { AdminPanel } from "./components/AdminPanel";
 
 type Step = {
   stepOrder: number;
   department: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   comment: string;
   reviewedAt: string | null;
 };
 
-type UserRole = 'STUDENT' | 'STAFF' | 'ADMIN';
+type UserRole = "STUDENT" | "STAFF" | "ADMIN";
 
 type AuthState = {
   role: UserRole;
@@ -20,19 +20,20 @@ type AuthState = {
   displayName: string | null;
 };
 
-function badge(status: Step['status']) {
-  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-700';
-  if (status === 'REJECTED') return 'bg-red-100 text-red-700';
-  return 'bg-slate-100 text-slate-700';
+function badge(status: Step["status"]) {
+  if (status === "APPROVED") return "bg-emerald-100 text-emerald-700";
+  if (status === "REJECTED") return "bg-red-100 text-red-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function App() {
   const [auth, setAuth] = useState<AuthState | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [quickLogin, setQuickLogin] = useState(true); // Development quick login mode
 
   const [steps, setSteps] = useState<Step[]>([]);
   const [studentMeta, setStudentMeta] = useState<{
@@ -41,18 +42,26 @@ function App() {
     department: string | null;
     year: string | null;
   } | null>(null);
-  const [clearanceStatus, setClearanceStatus] = useState<string>('');
-  const [referenceId, setReferenceId] = useState('');
+  const [clearanceStatus, setClearanceStatus] = useState<string>("");
+  const [referenceId, setReferenceId] = useState("");
   const [clearanceId, setClearanceId] = useState<string | null>(null);
   const [canCert, setCanCert] = useState(false);
-  const [notifs, setNotifs] = useState<Array<{ id: string; title: string; body: string; createdAt: string }>>([]);
+  const [notifs, setNotifs] = useState<
+    Array<{ id: string; title: string; body: string; createdAt: string }>
+  >([]);
 
   const [pendingRows, setPendingRows] = useState<
-    Array<{ requestId: string; referenceId: string; studentUserId: string; student?: Record<string, unknown>; step: Step }>
+    Array<{
+      requestId: string;
+      referenceId: string;
+      studentUserId: string;
+      student?: Record<string, unknown>;
+      step: Step;
+    }>
   >([]);
-  const [staffComment, setStaffComment] = useState('');
-  const [rejectReason, setRejectReason] = useState('');
-  const [rejectInstruction, setRejectInstruction] = useState('');
+  const [staffComment, setStaffComment] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectInstruction, setRejectInstruction] = useState("");
 
   const [adminSummary, setAdminSummary] = useState<{
     total: number;
@@ -61,18 +70,31 @@ function App() {
     inProgress: number;
   } | null>(null);
   const [auditLog, setAuditLog] = useState<
-    Array<{ id: string; createdAt: string; action: string; entityType: string; entityId: string; actor: { email: string } | null }>
+    Array<{
+      id: string;
+      createdAt: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      actor: { email: string } | null;
+    }>
   >([]);
 
-  const [recheckMessage, setRecheckMessage] = useState('');
+  const [recheckMessage, setRecheckMessage] = useState("");
 
-  const approved = useMemo(() => steps.filter((s) => s.status === 'APPROVED').length, [steps]);
+  const approved = useMemo(
+    () => steps.filter((s) => s.status === "APPROVED").length,
+    [steps],
+  );
   const progress = Math.round((approved / 13) * 100);
-  const rejectedStep = useMemo(() => steps.find((s) => s.status === 'REJECTED'), [steps]);
+  const rejectedStep = useMemo(
+    () => steps.find((s) => s.status === "REJECTED"),
+    [steps],
+  );
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
     } catch {
       // Ignore logout errors; we still clear local session.
     }
@@ -84,7 +106,7 @@ function App() {
 
   useEffect(() => {
     void api
-      .get('/auth/me')
+      .get("/auth/me")
       .then(({ data }) => {
         setAuth({
           role: data.role as UserRole,
@@ -100,31 +122,33 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.post('/auth/login', {
-        email: loginEmail.trim(),
-        password: loginPassword,
-      });
+      const endpoint = quickLogin ? "/auth/quick-login" : "/auth/login";
+      const payload = quickLogin
+        ? { email: loginEmail.trim() }
+        : { email: loginEmail.trim(), password: loginPassword };
+
+      const { data } = await api.post(endpoint, payload);
       setAuth({
         role: data.user.role as UserRole,
         email: data.user.email,
         displayName: data.user.displayName,
       });
-      setLoginPassword('');
+      setLoginPassword("");
     } catch {
-      setError('Login failed. Check email and password.');
+      setError("Login failed. Check email and password.");
     } finally {
       setLoading(false);
     }
   };
 
   const loadStudent = useCallback(async () => {
-    if (!auth || auth.role !== 'STUDENT') return;
+    if (!auth || auth.role !== "STUDENT") return;
     setLoading(true);
     setError(null);
     try {
       const [dash, n] = await Promise.all([
-        api.get('/student/clearances/dashboard'),
-        api.get('/notifications'),
+        api.get("/student/clearances/dashboard"),
+        api.get("/notifications"),
       ]);
       const s = dash.data.student;
       setStudentMeta({
@@ -142,44 +166,50 @@ function App() {
         setCanCert(dash.data.canDownloadCertificate);
       } else {
         setSteps([]);
-        setClearanceStatus('');
-        setReferenceId('');
+        setClearanceStatus("");
+        setReferenceId("");
         setClearanceId(null);
         setCanCert(false);
       }
       setNotifs(n.data);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load student data');
+      setError(e instanceof Error ? e.message : "Failed to load student data");
     } finally {
       setLoading(false);
     }
   }, [auth]);
 
   const loadStaff = useCallback(async () => {
-    if (!auth || auth.role !== 'STAFF') return;
+    if (!auth || auth.role !== "STAFF") return;
     setLoading(true);
     setError(null);
     try {
-      const [pend, n] = await Promise.all([api.get('/staff/clearances/pending'), api.get('/notifications')]);
+      const [pend, n] = await Promise.all([
+        api.get("/staff/clearances/pending"),
+        api.get("/notifications"),
+      ]);
       setPendingRows(pend.data);
       setNotifs(n.data);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load staff queue');
+      setError(e instanceof Error ? e.message : "Failed to load staff queue");
     } finally {
       setLoading(false);
     }
   }, [auth]);
 
   const loadAdmin = useCallback(async () => {
-    if (!auth || auth.role !== 'ADMIN') return;
+    if (!auth || auth.role !== "ADMIN") return;
     setLoading(true);
     setError(null);
     try {
-      const [sum, audit] = await Promise.all([api.get('/admin/reports/summary'), api.get('/admin/audit')]);
+      const [sum, audit] = await Promise.all([
+        api.get("/admin/reports/summary"),
+        api.get("/admin/audit"),
+      ]);
       setAdminSummary(sum.data);
       setAuditLog(audit.data);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load admin data');
+      setError(e instanceof Error ? e.message : "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -187,18 +217,20 @@ function App() {
 
   useEffect(() => {
     if (!auth) return;
-    if (auth.role === 'STUDENT') void loadStudent();
-    else if (auth.role === 'STAFF') void loadStaff();
-    else if (auth.role === 'ADMIN') void loadAdmin();
+    if (auth.role === "STUDENT") void loadStudent();
+    else if (auth.role === "STAFF") void loadStaff();
+    else if (auth.role === "ADMIN") void loadAdmin();
   }, [auth, loadStudent, loadStaff, loadAdmin]);
 
   const createDraft = async () => {
     setError(null);
     try {
-      await api.post('/student/clearances');
+      await api.post("/student/clearances");
       await loadStudent();
     } catch {
-      setError('Could not create draft (you may already have an active clearance).');
+      setError(
+        "Could not create draft (you may already have an active clearance).",
+      );
     }
   };
 
@@ -209,7 +241,7 @@ function App() {
       await api.post(`/student/clearances/${clearanceId}/submit`);
       await loadStudent();
     } catch {
-      setError('Submit failed (must be in DRAFT).');
+      setError("Submit failed (must be in DRAFT).");
     }
   };
 
@@ -217,21 +249,24 @@ function App() {
     setError(null);
     try {
       if (!clearanceId) {
-        setError('No clearance selected.');
+        setError("No clearance selected.");
         return;
       }
-      const res = await api.get(`/student/clearance/${clearanceId}/certificate/pdf`, {
-        responseType: 'blob',
-      });
-      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const res = await api.get(
+        `/student/clearance/${clearanceId}/certificate/pdf`,
+        {
+          responseType: "blob",
+        },
+      );
+      const blob = new Blob([res.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'clearance-certificate.pdf';
+      a.download = "clearance-certificate.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError('Certificate is only available after full clearance.');
+      setError("Certificate is only available after full clearance.");
     }
   };
 
@@ -243,38 +278,45 @@ function App() {
         stepOrder: rejectedStep.stepOrder,
         message: recheckMessage.trim(),
       });
-      setRecheckMessage('');
+      setRecheckMessage("");
       await loadStudent();
     } catch {
-      setError('Re-check failed (rejected steps only).');
+      setError("Re-check failed (rejected steps only).");
     }
   };
 
-  const review = async (status: 'APPROVED' | 'REJECTED') => {
+  const review = async (status: "APPROVED" | "REJECTED") => {
     const row = pendingRows[0];
     if (!row) return;
     if (!staffComment.trim() || staffComment.trim().length < 2) {
-      setError('Approval/rejection requires a comment (min 2 characters).');
+      setError("Approval/rejection requires a comment (min 2 characters).");
       return;
     }
-    if (status === 'REJECTED' && (!rejectReason.trim() || !rejectInstruction.trim())) {
-      setError('Rejection requires both reason and instruction.');
+    if (
+      status === "REJECTED" &&
+      (!rejectReason.trim() || !rejectInstruction.trim())
+    ) {
+      setError("Rejection requires both reason and instruction.");
       return;
     }
     setError(null);
     try {
-      await api.patch(`/staff/clearances/${row.requestId}/steps/${row.step.stepOrder}/review`, {
-        status,
-        comment: staffComment.trim(),
-        reason: status === 'REJECTED' ? rejectReason.trim() : undefined,
-        instruction: status === 'REJECTED' ? rejectInstruction.trim() : undefined,
-      });
-      setStaffComment('');
-      setRejectReason('');
-      setRejectInstruction('');
+      await api.patch(
+        `/staff/clearances/${row.requestId}/steps/${row.step.stepOrder}/review`,
+        {
+          status,
+          comment: staffComment.trim(),
+          reason: status === "REJECTED" ? rejectReason.trim() : undefined,
+          instruction:
+            status === "REJECTED" ? rejectInstruction.trim() : undefined,
+        },
+      );
+      setStaffComment("");
+      setRejectReason("");
+      setRejectInstruction("");
       await loadStaff();
     } catch {
-      setError('Review failed — check step order and permissions.');
+      setError("Review failed — check step order and permissions.");
     }
   };
 
@@ -290,41 +332,90 @@ function App() {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
         <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h1 className="text-xl font-bold text-slate-900">BHU Student Clearance</h1>
-          <p className="mt-1 text-sm text-slate-600">Sign in with your university account.</p>
-          <label className="mt-4 block text-xs font-medium text-slate-600">Email</label>
+          <h1 className="text-xl font-bold text-slate-900">
+            BHU Student Clearance
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Sign in with your university account.
+          </p>
+
+          {/* Development mode toggle */}
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="quickLogin"
+              checked={quickLogin}
+              onChange={(e) => setQuickLogin(e.target.checked)}
+              className="rounded border-slate-200"
+            />
+            <label htmlFor="quickLogin" className="text-xs text-slate-600">
+              Quick Login (No Password - Development Only)
+            </label>
+          </div>
+
+          <label className="mt-4 block text-xs font-medium text-slate-600">
+            Email
+          </label>
           <input
             className="mt-1 w-full rounded border border-slate-200 p-2 text-sm"
             value={loginEmail}
             onChange={(e) => setLoginEmail(e.target.value)}
             autoComplete="email"
+            placeholder={
+              quickLogin ? "Enter email to login" : "Enter your email"
+            }
           />
-          <label className="mt-3 block text-xs font-medium text-slate-600">Password</label>
-          <input
-            type="password"
-            className="mt-1 w-full rounded border border-slate-200 p-2 text-sm"
-            value={loginPassword}
-            onChange={(e) => setLoginPassword(e.target.value)}
-            autoComplete="current-password"
-            onKeyDown={(e) => e.key === 'Enter' && void login()}
-          />
+
+          {!quickLogin && (
+            <>
+              <label className="mt-3 block text-xs font-medium text-slate-600">
+                Password
+              </label>
+              <input
+                type="password"
+                className="mt-1 w-full rounded border border-slate-200 p-2 text-sm"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                autoComplete="current-password"
+                onKeyDown={(e) => e.key === "Enter" && void login()}
+              />
+            </>
+          )}
+
           {error && (
             <p className="mt-3 text-sm text-red-700" role="alert">
               {error}
             </p>
           )}
+
           <button
             type="button"
             className="mt-4 w-full rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white disabled:opacity-50"
-            disabled={loading}
+            disabled={loading || !loginEmail.trim()}
             onClick={() => void login()}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? "Signing in…" : quickLogin ? "Quick Sign In" : "Sign In"}
           </button>
+
           <p className="mt-4 text-xs text-slate-500">
-            Demo: seed creates <code className="rounded bg-slate-100 px-1">student@bhu.edu.et</code>,{' '}
-            <code className="rounded bg-slate-100 px-1">library@bhu.edu.et</code>,{' '}
-            <code className="rounded bg-slate-100 px-1">admin@bhu.edu.et</code> (see backend seed output).
+            {quickLogin ? (
+              <>
+                Demo emails:{" "}
+                <code className="rounded bg-slate-100 px-1">
+                  student@bhu.edu.et
+                </code>
+                ,{" "}
+                <code className="rounded bg-slate-100 px-1">
+                  library@bhu.edu.et
+                </code>
+                ,{" "}
+                <code className="rounded bg-slate-100 px-1">
+                  admin@bhu.edu.et
+                </code>
+              </>
+            ) : (
+              <>Use your university email and password to sign in.</>
+            )}
           </p>
         </div>
       </main>
@@ -336,9 +427,12 @@ function App() {
       <header className="mb-6 rounded-xl bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">BHU Student Clearance</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              BHU Student Clearance
+            </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Signed in as <strong>{auth.displayName ?? auth.email}</strong> ({auth.role})
+              Signed in as <strong>{auth.displayName ?? auth.email}</strong> (
+              {auth.role})
             </p>
           </div>
           <button
@@ -351,13 +445,16 @@ function App() {
         </div>
         {loading && <p className="mt-3 text-sm text-slate-500">Loading…</p>}
         {error && (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <p
+            className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"
+            role="alert"
+          >
             {error}
           </p>
         )}
       </header>
 
-      {auth.role === 'STUDENT' && (
+      {auth.role === "STUDENT" && (
         <StudentDashboard
           studentMeta={studentMeta}
           clearanceId={clearanceId}
@@ -379,7 +476,7 @@ function App() {
         />
       )}
 
-      {auth.role === 'STAFF' && (
+      {auth.role === "STAFF" && (
         <StaffDashboard
           notifs={notifs}
           pendingRows={pendingRows}
@@ -389,12 +486,14 @@ function App() {
           setRejectReason={setRejectReason}
           rejectInstruction={rejectInstruction}
           setRejectInstruction={setRejectInstruction}
-          onApprove={() => void review('APPROVED')}
-          onReject={() => void review('REJECTED')}
+          onApprove={() => void review("APPROVED")}
+          onReject={() => void review("REJECTED")}
         />
       )}
 
-      {auth.role === 'ADMIN' && <AdminPanel adminSummary={adminSummary} auditLog={auditLog} />}
+      {auth.role === "ADMIN" && (
+        <AdminPanel adminSummary={adminSummary} auditLog={auditLog} />
+      )}
     </main>
   );
 }

@@ -67,6 +67,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // For development: Skip password check and login based on email
+    // Remove this in production!
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🔓 Development login: ${dto.email} as ${user.role}`);
+      return this.buildAuthResponse(
+        user.id,
+        user.universityId,
+        user.email,
+        user.role,
+        user.displayName,
+      );
+    }
+
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');

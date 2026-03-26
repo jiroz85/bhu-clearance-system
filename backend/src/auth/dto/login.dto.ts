@@ -8,3 +8,9 @@ export class LoginDto {
   @MinLength(1)
   password: string;
 }
+
+// Development passwordless login
+export class QuickLoginDto {
+  @IsEmail()
+  email: string;
+}

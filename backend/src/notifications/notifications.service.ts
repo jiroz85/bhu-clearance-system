@@ -1,11 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService, NotificationData } from '../email/email.service';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(NotificationsService.name);
 
-  async create(userId: string, title: string, body: string, universityId?: string) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  async create(
+    userId: string,
+    title: string,
+    body: string,
+    universityId?: string,
+    type?: NotificationData['type'],
+    data?: Record<string, any>,
+  ) {
     let uniId = universityId;
     if (!uniId) {
       const user = await this.prisma.user.findUnique({
@@ -17,9 +30,32 @@ export class NotificationsService {
     if (!uniId) {
       return null;
     }
-    return this.prisma.notification.create({
+
+    // Create in-app notification
+    const notification = await this.prisma.notification.create({
       data: { userId, universityId: uniId, title, body },
     });
+
+    // Send email notification if type is provided
+    if (type) {
+      const emailData: NotificationData = {
+        userId,
+        universityId: uniId,
+        title,
+        body,
+        type,
+        data,
+      };
+
+      // Send email asynchronously (don't wait for it to complete)
+      this.emailService.sendEmailNotification(emailData).catch((error) => {
+        this.logger.error(
+          `Failed to send email notification: ${error.message}`,
+        );
+      });
+    }
+
+    return notification;
   }
 
   async listForUser(userId: string, take = 50) {

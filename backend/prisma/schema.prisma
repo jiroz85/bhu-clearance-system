@@ -34,6 +34,12 @@ enum ReviewDecision {
   REJECTED
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
 model University {
   id        String   @id @default(uuid()) @db.Uuid
   code      String   @unique @db.VarChar(64)
@@ -51,6 +57,7 @@ model University {
   certificates       Certificate[]
   auditLogs          AuditLog[]
   notifications      Notification[]
+  notificationQueue  NotificationQueue[]
 
   @@map("universities")
 }
@@ -69,6 +76,7 @@ model User {
   studentYear         String? @map("student_year") @db.VarChar(32)
   /// Must match `ClearanceStep.department` for the desk this staff serves
   staffDepartment String? @map("staff_department") @db.VarChar(160)
+  status          UserStatus @default(ACTIVE)
 
   clearancesAsStudent Clearance[] @relation("StudentClearances")
   certificates         Certificate[] @relation("StudentCertificates")
@@ -83,6 +91,7 @@ model User {
   @@index([role])
   @@index([staffDepartment])
   @@index([universityId])
+  @@index([status])
   @@map("app_users")
 }
 
@@ -95,6 +104,7 @@ model Clearance {
   /// Next step in sequence (1–13) while workflow is active; null when idle/complete
   currentStepOrder Int?             @map("current_step_order")
   submittedAt      DateTime?        @map("submitted_at")
+  completedAt      DateTime?        @map("completed_at")
 
   student User            @relation("StudentClearances", fields: [studentUserId], references: [id], onDelete: Cascade)
   steps   ClearanceStep[]
@@ -120,6 +130,7 @@ model ClearanceStep {
   /// Latest review summary (e.g. rejection reason + instruction)
   comment     String?     @db.Text
   reviewedAt  DateTime?   @map("reviewed_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
 
   clearance Clearance @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
   reviews   Review[]
@@ -255,10 +266,35 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University         @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  queueItems NotificationQueue[]
 
   @@index([universityId])
   @@index([userId, read])
   @@map("notifications")
+}
+
+model NotificationQueue {
+  id           String    @id @default(uuid()) @db.Uuid
+  universityId String    @map("university_id") @db.Uuid
+  notificationId String   @map("notification_id") @db.Uuid
+  type         String    @db.VarChar(64) // 'CLEARANCE_STEP_APPROVED', 'CLEARANCE_STEP_REJECTED', etc.
+  data         Json?
+  status       String    @default("PENDING") @db.VarChar(32) // 'PENDING', 'SENT', 'FAILED', 'PERMANENTLY_FAILED'
+  retryCount   Int       @default(0) @map("retry_count")
+  maxRetries   Int       @default(3) @map("max_retries")
+  lastError    String?   @db.Text @map("last_error")
+  scheduledAt  DateTime  @default(now()) @map("scheduled_at")
+  sentAt       DateTime? @map("sent_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  university   University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([universityId])
+  @@index([status, scheduledAt])
+  @@index([notificationId])
+  @@map("notification_queue")
 }

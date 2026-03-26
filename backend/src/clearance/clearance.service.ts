@@ -569,12 +569,18 @@ export class ClearanceService {
         studentUserId!,
         'Step approved',
         `${stepDepartment} approved your clearance (ref ${referenceId}).`,
+        undefined,
+        'CLEARANCE_STEP_APPROVED',
+        { referenceId },
       );
       if (refreshed?.status === ClearanceStatus.FULLY_CLEARED) {
         await this.notifications.create(
           studentUserId!,
           'Clearance complete',
           'All steps are approved. You may download your certificate when available.',
+          undefined,
+          'CLEARANCE_COMPLETE',
+          { referenceId },
         );
       } else {
         const next = refreshed?.steps.find(
@@ -593,6 +599,13 @@ export class ClearanceService {
         studentUserId!,
         'Clearance step rejected',
         `${stepDepartment} rejected your clearance. ${commentText}`,
+        undefined,
+        'CLEARANCE_STEP_REJECTED',
+        {
+          referenceId,
+          reason: payload.reason,
+          instruction: payload.instruction,
+        },
       );
     }
 
@@ -789,6 +802,9 @@ export class ClearanceService {
           studentUserId!,
           'Clearance complete',
           'All steps are approved. You may download your certificate when available.',
+          undefined,
+          'CLEARANCE_COMPLETE',
+          { referenceId },
         );
       } else {
         await this.notifications.create(
@@ -887,11 +903,33 @@ export class ClearanceService {
       });
     });
 
+    // Send notification to department staff
     await this.notifyDepartmentStaff(
       step.department,
       'Re-check requested',
       `Student requested re-evaluation: ${message} (ref ${clearance.referenceId}).`,
     );
+
+    // Send email notification to department staff
+    const staffUsers = await this.prisma.user.findMany({
+      where: {
+        staffDepartment: { contains: step.department, mode: 'insensitive' },
+        role: 'STAFF',
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+
+    for (const staff of staffUsers) {
+      await this.notifications.create(
+        staff.id,
+        'Re-check requested',
+        `Student requested re-evaluation: ${message} (ref ${clearance.referenceId}).`,
+        undefined,
+        'RECHECK_REQUESTED',
+        { referenceId: clearance.referenceId, department: step.department },
+      );
+    }
 
     await this.audit.log(
       studentUserId,
