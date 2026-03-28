@@ -321,13 +321,15 @@ export class ClearanceService {
     }
     const target = normalizeDepartment(staffDepartment);
 
+    // Find clearances where the current active step belongs to this staff's department
     const requests = await this.prisma.clearance.findMany({
       where: {
         universityId: staff.universityId,
         status: {
           in: [ClearanceStatus.SUBMITTED, ClearanceStatus.PAUSED_REJECTED],
         },
-        steps: { some: { status: StepStatus.PENDING } },
+        // Only get clearances that have a current step
+        currentStepOrder: { not: null },
       },
       include: {
         steps: { orderBy: { stepOrder: 'asc' } },
@@ -358,19 +360,29 @@ export class ClearanceService {
     }> = [];
 
     for (const req of requests) {
-      const pending = req.steps
-        .filter((s) => s.status === StepStatus.PENDING)
-        .sort((a, b) => a.stepOrder - b.stepOrder);
-      const active = pending[0];
-      if (!active) continue;
-      if (normalizeDepartment(active.department) !== target) continue;
+      // Get the current active step based on currentStepOrder
+      const currentStep = req.steps.find(
+        (s) =>
+          s.stepOrder === req.currentStepOrder &&
+          s.status === StepStatus.PENDING,
+      );
 
-      const prevOk =
-        active.stepOrder === 1 ||
-        req.steps
-          .filter((s) => s.stepOrder < active.stepOrder)
-          .every((s) => s.status === StepStatus.APPROVED);
-      if (!prevOk) continue;
+      if (!currentStep) continue;
+
+      // Only show if this step belongs to the staff's department
+      if (normalizeDepartment(currentStep.department) !== target) continue;
+
+      // Additional validation: ensure all previous steps are approved
+      const prevSteps = req.steps.filter(
+        (s) => s.stepOrder < currentStep.stepOrder,
+      );
+      const allPrevApproved = prevSteps.every(
+        (s) => s.status === StepStatus.APPROVED,
+      );
+
+      // For step 1, no previous steps to check
+      const isValidStep = currentStep.stepOrder === 1 || allPrevApproved;
+      if (!isValidStep) continue;
 
       rows.push({
         requestId: req.id,
@@ -383,10 +395,10 @@ export class ClearanceService {
           year: req.student.studentYear,
         },
         step: {
-          stepOrder: active.stepOrder,
-          department: active.department,
-          status: active.status,
-          comment: active.comment,
+          stepOrder: currentStep.stepOrder,
+          department: currentStep.department,
+          status: currentStep.status,
+          comment: currentStep.comment,
         },
       });
     }

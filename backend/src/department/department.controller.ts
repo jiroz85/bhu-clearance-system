@@ -2,8 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Body,
   Param,
   Query,
@@ -13,8 +11,15 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DepartmentService } from './department.service';
-import { DepartmentPermission } from './department.types';
 import { getDepartmentConfig } from './department.config';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+  };
+}
 
 @Controller('api/departments')
 @UseGuards(JwtAuthGuard)
@@ -23,7 +28,7 @@ export class DepartmentController {
 
   @Get(':departmentName/queue')
   async getDepartmentQueue(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('departmentName') departmentName: string,
     @Query('status') status?: 'PENDING' | 'APPROVED' | 'REJECTED',
     @Query('overdue') overdue?: boolean,
@@ -52,7 +57,7 @@ export class DepartmentController {
 
   @Get(':departmentName/metrics')
   async getDepartmentMetrics(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('departmentName') departmentName: string,
     @Query('timeframe') timeframe?: 'day' | 'week' | 'month',
   ) {
@@ -78,17 +83,15 @@ export class DepartmentController {
 
   @Post(':departmentName/steps/:stepId/approve')
   async approveStep(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('departmentName') departmentName: string,
     @Param('stepId') stepId: string,
-    @Body() body: { departmentData?: Record<string, any> },
   ) {
     // Check user permission
     const hasPermission =
       await this.departmentService.checkUserDepartmentPermission(
         req.user.userId,
         departmentName,
-        DepartmentPermission.APPROVE_STEPS,
       );
 
     if (!hasPermission) {
@@ -97,16 +100,12 @@ export class DepartmentController {
       );
     }
 
-    return this.departmentService.approveStep(
-      stepId,
-      req.user.userId,
-      body.departmentData,
-    );
+    return this.departmentService.approveStep(stepId, req.user.userId);
   }
 
   @Post(':departmentName/steps/:stepId/reject')
   async rejectStep(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('departmentName') departmentName: string,
     @Param('stepId') stepId: string,
     @Body()
@@ -121,7 +120,6 @@ export class DepartmentController {
       await this.departmentService.checkUserDepartmentPermission(
         req.user.userId,
         departmentName,
-        DepartmentPermission.REJECT_STEPS,
       );
 
     if (!hasPermission) {
@@ -135,12 +133,11 @@ export class DepartmentController {
       req.user.userId,
       body.reason,
       body.instruction,
-      body.departmentData,
     );
   }
 
   @Get(':departmentName/config')
-  async getDepartmentConfig(@Param('departmentName') departmentName: string) {
+  getDepartmentConfig(@Param('departmentName') departmentName: string) {
     const config = getDepartmentConfig(departmentName);
     if (!config) {
       throw new ForbiddenException('Department not found');
@@ -150,7 +147,7 @@ export class DepartmentController {
 
   @Get(':departmentName/users')
   async getDepartmentUsers(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('departmentName') departmentName: string,
   ) {
     // Check user permission (HOD or Admin only)
@@ -158,7 +155,6 @@ export class DepartmentController {
       await this.departmentService.checkUserDepartmentPermission(
         req.user.userId,
         departmentName,
-        DepartmentPermission.MANAGE_DEPARTMENT_USERS,
       );
 
     if (!hasPermission) {

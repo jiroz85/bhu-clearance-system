@@ -4,7 +4,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DepartmentPermission } from './department.types';
 import { getDepartmentConfig } from './department.config';
 import { ClearanceService } from '../clearance/clearance.service';
 
@@ -49,10 +48,17 @@ export class DepartmentService {
 
       console.log(`Getting queue for department: ${departmentName}`);
 
-      // Simplified query for testing
+      // Get clearances where this department is the CURRENT active step
       const clearances = await this.prisma.clearance.findMany({
         where: {
-          status: 'SUBMITTED', // Only get submitted clearances
+          status: { in: ['SUBMITTED', 'PAUSED_REJECTED'] },
+          currentStepOrder: { not: null },
+          steps: {
+            some: {
+              department: departmentName,
+              status: filters?.status || 'PENDING',
+            },
+          },
         },
         include: {
           student: {
@@ -86,34 +92,50 @@ export class DepartmentService {
         orderBy: {
           submittedAt: 'desc',
         },
-        take: 50, // Limit for testing
+        take: 50,
       });
 
-      console.log(`Found ${clearances.length} clearances`);
+      console.log(
+        `Found ${clearances.length} clearances for department ${departmentName}`,
+      );
 
-      // Filter and transform the results
+      // Filter to only show clearances where this department's step is the CURRENT active step
       const queue = clearances
         .map((clearance) => {
           const step = clearance.steps.find(
             (s) => s.department === departmentName,
           );
           if (!step) {
+            return null;
+          }
+
+          // CRITICAL: Only show if this department's step is the CURRENT active step
+          if (step.stepOrder !== clearance.currentStepOrder) {
             console.log(
-              `No step found for department ${departmentName} in clearance ${clearance.referenceId}`,
+              `Step ${step.stepOrder} for clearance ${clearance.referenceId} is not current (current: ${clearance.currentStepOrder})`,
             );
             return null;
           }
 
-          // Only include steps that are still pending
-          if (step.status !== 'PENDING') {
+          // Additional validation: ensure all previous steps are approved
+          const prevSteps = clearance.steps.filter(
+            (s) => s.stepOrder < step.stepOrder,
+          );
+          const allPrevApproved = prevSteps.every(
+            (s) => s.status === 'APPROVED',
+          );
+
+          // For step 1, no previous steps to check
+          const isValidStep = step.stepOrder === 1 || allPrevApproved;
+          if (!isValidStep) {
             console.log(
-              `Step ${step.id} for clearance ${clearance.referenceId} is not pending (status: ${step.status})`,
+              `Previous steps not all approved for clearance ${clearance.referenceId}`,
             );
             return null;
           }
 
           console.log(
-            `Including pending step ${step.id} for clearance ${clearance.referenceId}`,
+            `Including current active step ${step.stepOrder} for clearance ${clearance.referenceId}`,
           );
           return {
             id: clearance.id,
@@ -134,7 +156,9 @@ export class DepartmentService {
         })
         .filter((item) => item !== null);
 
-      console.log(`Returning ${queue.length} queue items`);
+      console.log(
+        `Returning ${queue.length} queue items for department ${departmentName}`,
+      );
       return queue;
     } catch (error) {
       console.error('Error in getDepartmentQueue:', error);
@@ -151,7 +175,7 @@ export class DepartmentService {
 
       // Calculate date filter based on timeframe
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
 
       switch (timeframe) {
         case 'day':
@@ -267,7 +291,6 @@ export class DepartmentService {
   async checkUserDepartmentPermission(
     userId: string,
     departmentName: string,
-    permission: DepartmentPermission,
   ): Promise<boolean> {
     try {
       const user = await this.prisma.user.findUnique({
@@ -300,11 +323,7 @@ export class DepartmentService {
     }
   }
 
-  async approveStep(
-    stepId: string,
-    reviewerUserId: string,
-    departmentData?: Record<string, any>,
-  ) {
+  async approveStep(stepId: string, reviewerUserId: string) {
     // Find the step to get clearance details
     const step = await this.prisma.clearanceStep.findUnique({
       where: { id: stepId },
@@ -343,7 +362,6 @@ export class DepartmentService {
     reviewerUserId: string,
     reason: string,
     instruction?: string,
-    departmentData?: Record<string, any>,
   ) {
     // Find the step to get clearance details
     const step = await this.prisma.clearanceStep.findUnique({

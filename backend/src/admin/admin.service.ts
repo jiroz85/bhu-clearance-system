@@ -298,18 +298,20 @@ export class AdminService {
       throw new BadRequestException('Cannot delete ADMIN user');
     }
 
-    // Check if user has active clearances
-    const activeClearances = await this.prisma.clearance.count({
-      where: {
-        studentUserId: userId,
-        status: { in: ['DRAFT', 'SUBMITTED', 'PAUSED_REJECTED'] },
-      },
-    });
+    // Check if user has active clearances (only for active users)
+    if (existing.status === 'ACTIVE') {
+      const activeClearances = await this.prisma.clearance.count({
+        where: {
+          studentUserId: userId,
+          status: { in: ['DRAFT', 'SUBMITTED', 'PAUSED_REJECTED'] },
+        },
+      });
 
-    if (activeClearances > 0) {
-      throw new BadRequestException(
-        'Cannot delete user with active clearances',
-      );
+      if (activeClearances > 0) {
+        throw new BadRequestException(
+          'Cannot delete user with active clearances. Set user status to INACTIVE first.',
+        );
+      }
     }
 
     await this.prisma.user.delete({

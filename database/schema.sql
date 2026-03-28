@@ -515,18 +515,18 @@ ON CONFLICT (name, version) DO NOTHING;
 
 -- Departments in strict order
 INSERT INTO departments (code, name) VALUES
-('DEPT_HEAD', 'Department Head'),
+('DEPT_HEAD', 'Department head'),
 ('LIBRARY', 'Library'),
-('BOOKSTORE', 'Bookstore'),
+('BOOKSTORE', 'University Book store'),
 ('DORMITORY', 'Dormitory'),
-('CAFETERIA', 'Cafeteria'),
-('SPORTS', 'Sports Office'),
-('POLICE', 'University Police'),
-('STUDENT_DEAN', 'Student Dean'),
-('ELEARNING', 'E-learning Directorate'),
-('CEP', 'CEP Coordinator'),
-('FINANCE', 'Finance'),
-('COST_SHARING', 'Cost Sharing'),
+('CAFETERIA', 'Student Cafeteria Service'),
+('SPORTS', 'Sport Master'),
+('POLICE', 'University police'),
+('STUDENT_DEAN', 'Office of the student Dean'),
+('ELEARNING', 'e-Learning Management directorate'),
+('CEP', 'College Continues Education Program Coordinator'),
+('FINANCE', 'Finance Administration'),
+('COST_SHARING', 'Office of the cost sharing'),
 ('COLLEGE_REG_COORD', 'College Registrar Coordinator')
 ON CONFLICT (code) DO NOTHING;
 
@@ -539,18 +539,18 @@ SELECT aw.id, s.step_order, d.id, s.step_code, s.step_name, TRUE
 FROM active_wf aw
 JOIN (
     VALUES
-    (1, 'STEP_01_DEPT_HEAD', 'Department Head', 'DEPT_HEAD'),
+    (1, 'STEP_01_DEPT_HEAD', 'Department head', 'DEPT_HEAD'),
     (2, 'STEP_02_LIBRARY', 'Library', 'LIBRARY'),
-    (3, 'STEP_03_BOOKSTORE', 'Bookstore', 'BOOKSTORE'),
+    (3, 'STEP_03_BOOKSTORE', 'University Book store', 'BOOKSTORE'),
     (4, 'STEP_04_DORMITORY', 'Dormitory', 'DORMITORY'),
-    (5, 'STEP_05_CAFETERIA', 'Cafeteria', 'CAFETERIA'),
-    (6, 'STEP_06_SPORTS', 'Sports Office', 'SPORTS'),
-    (7, 'STEP_07_POLICE', 'University Police', 'POLICE'),
-    (8, 'STEP_08_STUDENT_DEAN', 'Student Dean', 'STUDENT_DEAN'),
-    (9, 'STEP_09_ELEARNING', 'E-learning Directorate', 'ELEARNING'),
-    (10, 'STEP_10_CEP', 'CEP Coordinator', 'CEP'),
-    (11, 'STEP_11_FINANCE', 'Finance', 'FINANCE'),
-    (12, 'STEP_12_COST_SHARING', 'Cost Sharing', 'COST_SHARING'),
+    (5, 'STEP_05_CAFETERIA', 'Student Cafeteria Service', 'CAFETERIA'),
+    (6, 'STEP_06_SPORTS', 'Sport Master', 'SPORTS'),
+    (7, 'STEP_07_POLICE', 'University police', 'POLICE'),
+    (8, 'STEP_08_STUDENT_DEAN', 'Office of the student Dean', 'STUDENT_DEAN'),
+    (9, 'STEP_09_ELEARNING', 'e-Learning Management directorate', 'ELEARNING'),
+    (10, 'STEP_10_CEP', 'College Continues Education Program Coordinator', 'CEP'),
+    (11, 'STEP_11_FINANCE', 'Finance Administration', 'FINANCE'),
+    (12, 'STEP_12_COST_SHARING', 'Office of the cost sharing', 'COST_SHARING'),
     (13, 'STEP_13_COLLEGE_REG_COORD', 'College Registrar Coordinator', 'COLLEGE_REG_COORD')
 ) AS s(step_order, step_code, step_name, department_code)
 ON TRUE

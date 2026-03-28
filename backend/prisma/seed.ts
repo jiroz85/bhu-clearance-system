@@ -7,18 +7,18 @@ import { Role } from '../generated/prisma/enums';
 const BCRYPT_ROUNDS = 12;
 
 const WORKFLOW_DEPARTMENTS = [
-  'Department Head',
+  'Department head',
   'Library',
-  'Bookstore',
+  'University Book store',
   'Dormitory',
-  'Cafeteria',
-  'Sports Office',
-  'University Police',
-  'Student Dean',
-  'E-learning Directorate',
-  'CEP Coordinator',
-  'Finance',
-  'Cost Sharing',
+  'Student Cafeteria Service',
+  'Sport Master',
+  'University police',
+  'Office of the student Dean',
+  'e-Learning Management directorate',
+  'College Continues Education Program Coordinator',
+  'Finance Administration',
+  'Office of the cost sharing',
   'College Registrar Coordinator',
 ];
 
@@ -31,7 +31,10 @@ function deriveDepartmentCode(name: string) {
 }
 
 function deriveStepCode(stepOrder: number, departmentCode: string) {
-  return `STEP_${String(stepOrder).padStart(2, '0')}_${departmentCode}`.slice(0, 64);
+  return `STEP_${String(stepOrder).padStart(2, '0')}_${departmentCode}`.slice(
+    0,
+    64,
+  );
 }
 
 function deriveStepName(departmentName: string) {
@@ -51,11 +54,15 @@ async function main() {
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@bhu.edu.et';
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe_Admin123!';
   const studentEmail = process.env.SEED_STUDENT_EMAIL ?? 'student@bhu.edu.et';
-  const studentPassword = process.env.SEED_STUDENT_PASSWORD ?? 'ChangeMe_Student123!';
+  const studentPassword =
+    process.env.SEED_STUDENT_PASSWORD ?? 'ChangeMe_Student123!';
   const libraryEmail = process.env.SEED_LIBRARY_EMAIL ?? 'library@bhu.edu.et';
-  const libraryPassword = process.env.SEED_LIBRARY_PASSWORD ?? 'ChangeMe_Library123!';
-  const deptHeadEmail = process.env.SEED_DEPT_HEAD_EMAIL ?? 'depthead@bhu.edu.et';
-  const deptHeadPassword = process.env.SEED_DEPT_HEAD_PASSWORD ?? 'ChangeMe_DeptHead123!';
+  const libraryPassword =
+    process.env.SEED_LIBRARY_PASSWORD ?? 'ChangeMe_Library123!';
+  const deptHeadEmail =
+    process.env.SEED_DEPT_HEAD_EMAIL ?? 'depthead@bhu.edu.et';
+  const deptHeadPassword =
+    process.env.SEED_DEPT_HEAD_PASSWORD ?? 'ChangeMe_DeptHead123!';
 
   const university = await prisma.university.upsert({
     where: { code: 'BHU' },
@@ -65,7 +72,9 @@ async function main() {
 
   // Seed departments + ordered workflow (DB-driven workflow for production)
   const workflow = await prisma.clearanceWorkflow.upsert({
-    where: { name_version: { name: 'BHU Standard Exit Clearance', version: 1 } },
+    where: {
+      name_version: { name: 'BHU Standard Exit Clearance', version: 1 },
+    },
     update: {},
     create: {
       universityId: university.id,
@@ -186,33 +195,29 @@ async function main() {
       passwordHash: deptHeadHash,
       role: Role.STAFF,
       displayName: 'Department Head Desk',
-      staffDepartment: 'Department Head',
+      staffDepartment: 'Department head',
     },
     update: {
       passwordHash: deptHeadHash,
       universityId: university.id,
       role: Role.STAFF,
       displayName: 'Department Head Desk',
-      staffDepartment: 'Department Head',
+      staffDepartment: 'Department head',
     },
   });
 
-  // eslint-disable-next-line no-console
   console.log('Seeded users:');
-  // eslint-disable-next-line no-console
   console.log(`  ADMIN   ${adminEmail} / ${adminPassword}`);
-  // eslint-disable-next-line no-console
   console.log(`  STUDENT ${studentEmail} / ${studentPassword}`);
-  // eslint-disable-next-line no-console
   console.log(`  STAFF   ${libraryEmail} / ${libraryPassword} (Library)`);
-  // eslint-disable-next-line no-console
-  console.log(`  STAFF   ${deptHeadEmail} / ${deptHeadPassword} (Department Head)`);
+  console.log(
+    `  STAFF   ${deptHeadEmail} / ${deptHeadPassword} (Department Head)`,
+  );
 
   await prisma.$disconnect();
 }
 
 main().catch((e) => {
-  // eslint-disable-next-line no-console
   console.error(e);
   process.exit(1);
 });

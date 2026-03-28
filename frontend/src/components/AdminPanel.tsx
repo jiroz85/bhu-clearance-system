@@ -212,7 +212,7 @@ export function AdminPanel(props: {
 
   const handleUpdateUser = async (userId: string, updates: UpdateUserDto) => {
     try {
-      await api.patch(`/api/admin/users/${userId}`, updates);
+      await api.patch(`/admin/users/${userId}`, updates);
       setEditingUser(null);
       loadUsers();
     } catch (error: unknown) {
@@ -229,8 +229,10 @@ export function AdminPanel(props: {
       await api.delete(`/admin/users/${userId}`);
       loadUsers();
     } catch (error: unknown) {
+      // Use enhanced error message from API interceptor
+      const axiosError = error as { userMessage?: string; message?: string };
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to delete user";
+        axiosError.userMessage || axiosError.message || "Failed to delete user";
       setUsersError(errorMessage);
     }
   };
