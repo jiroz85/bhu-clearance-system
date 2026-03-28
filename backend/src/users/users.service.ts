@@ -11,7 +11,9 @@ export class UsersService {
   }
 
   findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    return this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
   }
 
   findByStudentUniversityId(studentUniversityId: string) {
@@ -35,9 +37,9 @@ export class UsersService {
     passwordHash: string;
     displayName?: string;
     role?: Role;
-    studentUniversityId?: string | null;
-    studentDepartment?: string | null;
-    studentYear?: string | null;
+    studentUniversityId?: string | undefined;
+    studentDepartment?: string | undefined;
+    studentYear?: string | undefined;
   }) {
     if (!data.universityId) {
       throw new Error('universityId is required when creating user');

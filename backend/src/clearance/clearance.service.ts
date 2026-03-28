@@ -406,9 +406,20 @@ export class ClearanceService {
       instruction?: string;
     },
   ) {
-    if (!staffDepartment) {
+    if (!staffDepartment?.trim()) {
       throw new BadRequestException('Staff account has no department assigned');
     }
+
+    if (!payload.status || !['APPROVED', 'REJECTED'].includes(payload.status)) {
+      throw new BadRequestException(
+        'Status must be either APPROVED or REJECTED',
+      );
+    }
+
+    if (!payload.comment?.trim()) {
+      throw new BadRequestException('Comment is required');
+    }
+
     if (
       payload.status === 'REJECTED' &&
       (!payload.reason?.trim() || !payload.instruction?.trim())
@@ -432,7 +443,6 @@ export class ClearanceService {
     let studentUserId = '';
     let referenceId = '';
     let stepDepartment = '';
-    let refreshedStatus: ClearanceStatus = ClearanceStatus.SUBMITTED;
 
     await this.prisma.$transaction(async (tx) => {
       const reviewer = await tx.user.findUnique({
@@ -484,9 +494,7 @@ export class ClearanceService {
             decision === ReviewDecision.APPROVED
               ? StepStatus.APPROVED
               : StepStatus.REJECTED,
-          comment:
-            commentText ||
-            (decision === ReviewDecision.REJECTED ? commentText : null),
+          comment: commentText || null,
           reviewedAt: now,
         },
       });
@@ -496,6 +504,7 @@ export class ClearanceService {
         );
       }
 
+      // Validate workflow sequence
       if (stepOrder > 1) {
         const prev = clearance.steps.find((s) => s.stepOrder === stepOrder - 1);
         if (!prev || prev.status !== StepStatus.APPROVED) {
@@ -503,17 +512,27 @@ export class ClearanceService {
         }
       }
 
-      await tx.review.create({
-        data: {
-          clearanceStepId: step.id,
-          reviewerUserId,
-          decision,
-          comment: payload.comment.trim() || null,
-          reason: payload.status === 'REJECTED' ? payload.reason!.trim() : null,
-          instruction:
-            payload.status === 'REJECTED' ? payload.instruction!.trim() : null,
-        },
-      });
+      // Create review record with proper validation
+      const reviewData: {
+        clearanceStepId: string;
+        reviewerUserId: string;
+        decision: ReviewDecision;
+        comment: string | null;
+        reason?: string | null;
+        instruction?: string | null;
+      } = {
+        clearanceStepId: step.id,
+        reviewerUserId,
+        decision,
+        comment: payload.comment?.trim() || null,
+      };
+
+      if (payload.status === 'REJECTED') {
+        reviewData.reason = payload.reason?.trim() || null;
+        reviewData.instruction = payload.instruction?.trim() || null;
+      }
+
+      await tx.review.create({ data: reviewData });
 
       const stepsNow = await tx.clearanceStep.findMany({
         where: { clearanceId },
@@ -532,7 +551,6 @@ export class ClearanceService {
             currentStepOrder: stepOrder,
           },
         });
-        refreshedStatus = ClearanceStatus.PAUSED_REJECTED;
       } else if (allApproved) {
         await tx.clearance.update({
           where: { id: clearanceId },
@@ -541,7 +559,6 @@ export class ClearanceService {
             currentStepOrder: null,
           },
         });
-        refreshedStatus = ClearanceStatus.FULLY_CLEARED;
       } else {
         const nextOrder = stepOrder + 1;
         await tx.clearance.update({
@@ -551,7 +568,6 @@ export class ClearanceService {
             currentStepOrder: nextOrder <= maxStepOrder ? nextOrder : null,
           },
         });
-        refreshedStatus = ClearanceStatus.SUBMITTED;
       }
 
       studentUserId = clearance.studentUserId;
@@ -566,7 +582,7 @@ export class ClearanceService {
 
     if (payload.status === 'APPROVED') {
       await this.notifications.create(
-        studentUserId!,
+        studentUserId,
         'Step approved',
         `${stepDepartment} approved your clearance (ref ${referenceId}).`,
         undefined,
@@ -575,7 +591,7 @@ export class ClearanceService {
       );
       if (refreshed?.status === ClearanceStatus.FULLY_CLEARED) {
         await this.notifications.create(
-          studentUserId!,
+          studentUserId,
           'Clearance complete',
           'All steps are approved. You may download your certificate when available.',
           undefined,
@@ -596,7 +612,7 @@ export class ClearanceService {
       }
     } else {
       await this.notifications.create(
-        studentUserId!,
+        studentUserId,
         'Clearance step rejected',
         `${stepDepartment} rejected your clearance. ${commentText}`,
         undefined,
@@ -640,9 +656,49 @@ export class ClearanceService {
     return refreshed;
   }
 
-  async listAllForAdmin(skip = 0, take = 50) {
+  async listAllForAdmin(
+    skip = 0,
+    take = 50,
+    filters?: {
+      status?: string;
+      studentEmail?: string;
+      department?: string;
+    },
+  ) {
+    // Validate pagination parameters
+    if (skip < 0) {
+      throw new BadRequestException('Skip parameter must be non-negative');
+    }
+    if (take < 1 || take > 100) {
+      throw new BadRequestException('Take parameter must be between 1 and 100');
+    }
+
+    const where: Record<string, any> = {};
+
+    if (filters?.status?.trim()) {
+      where.status = filters.status;
+    }
+
+    if (filters?.studentEmail?.trim()) {
+      where.student = {
+        email: { contains: filters.studentEmail.trim(), mode: 'insensitive' },
+      };
+    }
+
+    if (filters?.department?.trim()) {
+      where.steps = {
+        some: {
+          department: {
+            contains: filters.department.trim(),
+            mode: 'insensitive',
+          },
+        },
+      };
+    }
+
     const [items, total] = await Promise.all([
       this.prisma.clearance.findMany({
+        where,
         skip,
         take,
         orderBy: { updatedAt: 'desc' },
@@ -657,10 +713,11 @@ export class ClearanceService {
           },
           steps: {
             select: { stepOrder: true, department: true, status: true },
+            orderBy: { stepOrder: 'asc' },
           },
         },
       }),
-      this.prisma.clearance.count(),
+      this.prisma.clearance.count({ where }),
     ]);
     return { items, total, skip, take };
   }
@@ -799,7 +856,7 @@ export class ClearanceService {
     if (dto.decision === 'APPROVED') {
       if (refreshed?.status === ClearanceStatus.FULLY_CLEARED) {
         await this.notifications.create(
-          studentUserId!,
+          studentUserId,
           'Clearance complete',
           'All steps are approved. You may download your certificate when available.',
           undefined,
@@ -808,7 +865,7 @@ export class ClearanceService {
         );
       } else {
         await this.notifications.create(
-          studentUserId!,
+          studentUserId,
           'Step approved (admin override)',
           `${stepDepartment} was approved by admin override (ref ${referenceId}).`,
         );
@@ -825,7 +882,7 @@ export class ClearanceService {
       }
     } else {
       await this.notifications.create(
-        studentUserId!,
+        studentUserId,
         'Clearance step rejected (admin override)',
         `${stepDepartment} rejected your clearance by admin override. Reason: ${reason}`,
       );
@@ -835,7 +892,7 @@ export class ClearanceService {
       actorUserId,
       'ADMIN_OVERRIDE',
       'clearance_step',
-      stepId!,
+      stepId,
       {
         clearanceId,
         stepOrder: dto.stepOrder,

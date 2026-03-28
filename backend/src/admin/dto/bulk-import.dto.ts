@@ -1,36 +1,13 @@
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role } from '../../../generated/prisma/enums';
+import { ValidateNested, IsArray, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BaseUserValidationDto } from './base-user.dto';
 
-const ADMIN_CREATABLE_ROLES = [Role.STUDENT, Role.STAFF] as const;
-
-export class BulkImportUserDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(1)
-  displayName: string;
-
-  @IsIn(ADMIN_CREATABLE_ROLES as unknown as string[])
-  role: (typeof ADMIN_CREATABLE_ROLES)[number];
-
-  @IsOptional()
-  @IsString()
-  staffDepartment?: string;
-
-  @IsOptional()
-  @IsString()
-  studentUniversityId?: string;
-
-  @IsOptional()
-  @IsString()
-  studentDepartment?: string;
-
-  @IsOptional()
-  @IsString()
-  studentYear?: string;
-}
+export class BulkImportUserDto extends BaseUserValidationDto {}
 
 export class BulkImportDto {
+  @IsArray({ message: 'Users must be provided as an array' })
+  @IsNotEmpty({ message: 'At least one user must be provided' })
+  @ValidateNested({ each: true, message: 'Each user entry must be valid' })
+  @Type(() => BulkImportUserDto)
   users: BulkImportUserDto[];
 }

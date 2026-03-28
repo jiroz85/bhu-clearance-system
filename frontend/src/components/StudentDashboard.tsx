@@ -15,6 +15,7 @@ type NotificationItem = {
 };
 
 export function StudentDashboard(props: {
+  loading?: boolean;
   studentMeta: {
     name: string;
     studentId: string | null;
@@ -57,6 +58,16 @@ export function StudentDashboard(props: {
     onDownloadCertificatePdf,
     badgeClass,
   } = props;
+
+  if (props.loading) {
+    return (
+      <section className="space-y-4">
+        <div className="rounded-xl bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-500">Loading clearance data…</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4">

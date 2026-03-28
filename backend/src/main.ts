@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { ConfigService } from '@nestjs/config';
 import pinoHttp from 'pino-http';
 import { randomUUID } from 'crypto';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,7 +23,8 @@ async function bootstrap() {
         res.setHeader('x-request-id', id);
         return id;
       },
-      customSuccessMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
+      customSuccessMessage: (req, res) =>
+        `${req.method} ${req.url} ${res.statusCode}`,
       customErrorMessage: (req, res, err) =>
         `${req.method} ${req.url} ${res.statusCode} ${err.message}`,
       serializers: {
@@ -63,8 +66,17 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => {
+        const messages = errors
+          .map((e) => Object.values(e.constraints || {}).join(', '))
+          .filter(Boolean);
+        return new BadRequestException(messages.join('; '));
+      },
     }),
   );
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalInterceptors(new ResponseInterceptor());
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

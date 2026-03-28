@@ -588,4 +588,530 @@ export class ReportingService {
     // Generate buffer
     return Buffer.from(doc.output('arraybuffer'));
   }
+
+  async getEnhancedDepartmentPerformance(
+    universityId: string,
+    timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<any[]> {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (timeframe) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(
+          now.getFullYear(),
+          Math.floor(now.getMonth() / 3) * 3,
+          1,
+        );
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    const departments = await this.prisma.department.findMany({
+      where: { universityId },
+    });
+
+    const departmentStats = await Promise.all(
+      departments.map(async (dept) => {
+        const clearanceSteps = await this.prisma.clearanceStep.findMany({
+          where: {
+            department: dept.name,
+            clearance: {
+              universityId,
+              createdAt: { gte: startDate },
+            },
+          },
+          include: {
+            clearance: {
+              select: {
+                student: {
+                  select: {
+                    displayName: true,
+                    studentUniversityId: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        const allSteps = clearanceSteps;
+        const approvedSteps = allSteps.filter((s) => s.status === 'APPROVED');
+        const rejectedSteps = allSteps.filter((s) => s.status === 'REJECTED');
+        const pendingSteps = allSteps.filter((s) => s.status === 'PENDING');
+
+        // Calculate overdue count (pending for more than 3 days)
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        const overdueSteps = pendingSteps.filter(
+          (s) => s.createdAt < threeDaysAgo,
+        );
+
+        const approvedWithTimes = approvedSteps.filter((s) => s.reviewedAt);
+        const averageProcessingTimeHours =
+          approvedWithTimes.length > 0
+            ? approvedWithTimes.reduce((sum, step) => {
+                const processingTime =
+                  step.reviewedAt!.getTime() - step.createdAt.getTime();
+                return sum + processingTime / (1000 * 60 * 60);
+              }, 0) / approvedWithTimes.length
+            : 0;
+
+        // Generate trend data
+        const trendData = await this.generateDepartmentTrendData(
+          dept.name,
+          universityId,
+          startDate,
+          now,
+        );
+
+        return {
+          department: dept.name,
+          metrics: {
+            totalProcessed: allSteps.length,
+            approved: approvedSteps.length,
+            rejected: rejectedSteps.length,
+            pending: pendingSteps.length,
+            approvalRate:
+              allSteps.length > 0
+                ? (approvedSteps.length / allSteps.length) * 100
+                : 0,
+            averageProcessingTimeHours:
+              Math.round(averageProcessingTimeHours * 10) / 10,
+            overdueCount: overdueSteps.length,
+          },
+          trend: {
+            period: timeframe || 'month',
+            data: trendData,
+          },
+        };
+      }),
+    );
+
+    return departmentStats.sort(
+      (a, b) => b.metrics.approvalRate - a.metrics.approvalRate,
+    );
+  }
+
+  async getBottleneckAnalysis(universityId: string): Promise<any[]> {
+    const departments = await this.prisma.department.findMany({
+      where: { universityId },
+    });
+
+    const bottleneckData = await Promise.all(
+      departments.map(async (dept) => {
+        const pendingClearances = await this.prisma.clearanceStep.findMany({
+          where: {
+            department: dept.name,
+            status: 'PENDING',
+            createdAt: {
+              lt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            },
+          },
+          include: {
+            clearance: {
+              include: {
+                student: {
+                  select: {
+                    displayName: true,
+                    studentUniversityId: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        });
+
+        // Categorize bottlenecks by severity
+        const now = new Date();
+        const bottlenecks = pendingClearances.map((clearance) => {
+          const pendingDays = Math.floor(
+            (now.getTime() - clearance.createdAt.getTime()) /
+              (1000 * 60 * 60 * 24),
+          );
+
+          let type: 'CRITICAL' | 'URGENT' | 'WARNING';
+          if (pendingDays >= 5) type = 'CRITICAL';
+          else if (pendingDays >= 3) type = 'URGENT';
+          else type = 'WARNING';
+
+          return {
+            type,
+            clearanceId: clearance.id,
+            studentName: clearance.clearance.student.displayName || 'Unknown',
+            studentId: clearance.clearance.student.studentUniversityId || 'N/A',
+            pendingDays,
+            reason: clearance.comment || 'No specific reason provided',
+          };
+        });
+
+        const recommendations =
+          this.generateBottleneckRecommendations(bottlenecks);
+
+        return {
+          department: dept.name,
+          bottlenecks,
+          recommendations,
+        };
+      }),
+    );
+
+    return bottleneckData.filter((dept) => dept.bottlenecks.length > 0);
+  }
+
+  async getClearanceTrends(
+    universityId: string,
+    timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<any[]> {
+    const now = new Date();
+    let startDate: Date;
+    let dataPoints: number;
+
+    switch (timeframe) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        dataPoints = 7;
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        dataPoints = 30;
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        dataPoints = 90;
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        dataPoints = 365;
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        dataPoints = 30;
+    }
+
+    const clearances = await this.prisma.clearance.findMany({
+      where: {
+        universityId,
+        createdAt: { gte: startDate },
+      },
+      select: {
+        createdAt: true,
+        status: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Group by date
+    const dailyData = clearances.reduce(
+      (acc, clearance) => {
+        const date = clearance.createdAt.toISOString().slice(0, 10); // YYYY-MM-DD format
+
+        if (!acc[date]) {
+          acc[date] = {
+            date,
+            total: 0,
+            completed: 0,
+            pending: 0,
+            rejected: 0,
+          };
+        }
+
+        acc[date].total += 1;
+
+        switch (clearance.status) {
+          case 'FULLY_CLEARED':
+            acc[date].completed += 1;
+            break;
+          case 'SUBMITTED':
+            acc[date].pending += 1;
+            break;
+          case 'PAUSED_REJECTED':
+            acc[date].rejected += 1;
+            break;
+        }
+
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+
+    // Fill in missing dates with zeros
+    const trends = [];
+    for (let i = dataPoints - 1; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().slice(0, 10);
+
+      trends.push(
+        dailyData[dateStr] || {
+          date: dateStr,
+          total: 0,
+          completed: 0,
+          pending: 0,
+          rejected: 0,
+        },
+      );
+    }
+
+    return trends;
+  }
+
+  async exportEnhancedExcelReport(
+    universityId: string,
+    timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<Buffer> {
+    const departmentPerformance = await this.getEnhancedDepartmentPerformance(
+      universityId,
+      timeframe,
+    );
+    const bottlenecks = await this.getBottleneckAnalysis(universityId);
+    const trends = await this.getClearanceTrends(universityId, timeframe);
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+
+    // Enhanced Department Performance Sheet
+    const deptData = [
+      [
+        'Department',
+        'Total Processed',
+        'Approved',
+        'Rejected',
+        'Pending',
+        'Approval Rate (%)',
+        'Avg Processing Time (Hours)',
+        'Overdue Count',
+      ],
+      ...departmentPerformance.map((dept) => [
+        dept.department,
+        dept.metrics.totalProcessed,
+        dept.metrics.approved,
+        dept.metrics.rejected,
+        dept.metrics.pending,
+        dept.metrics.approvalRate.toFixed(2),
+        dept.metrics.averageProcessingTimeHours,
+        dept.metrics.overdueCount,
+      ]),
+    ];
+
+    const deptWs = XLSX.utils.aoa_to_sheet(deptData);
+    XLSX.utils.book_append_sheet(wb, deptWs, 'Department Performance');
+
+    // Bottlenecks Sheet
+    const bottleneckData = [
+      [
+        'Department',
+        'Clearance ID',
+        'Student Name',
+        'Student ID',
+        'Pending Days',
+        'Severity',
+        'Reason',
+      ],
+      ...bottlenecks.flatMap((dept) =>
+        dept.bottlenecks.map((b: any) => [
+          dept.department,
+          b.clearanceId,
+          b.studentName,
+          b.studentId,
+          b.pendingDays,
+          b.type,
+          b.reason,
+        ]),
+      ),
+    ];
+
+    const bottleneckWs = XLSX.utils.aoa_to_sheet(bottleneckData);
+    XLSX.utils.book_append_sheet(wb, bottleneckWs, 'Bottlenecks');
+
+    // Trends Sheet
+    const trendsData = [
+      ['Date', 'Total', 'Completed', 'Pending', 'Rejected'],
+      ...trends.map((trend) => [
+        trend.date,
+        trend.total,
+        trend.completed,
+        trend.pending,
+        trend.rejected,
+      ]),
+    ];
+
+    const trendsWs = XLSX.utils.aoa_to_sheet(trendsData);
+    XLSX.utils.book_append_sheet(wb, trendsWs, 'Trends');
+
+    // Generate buffer
+    const excelBuffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    return Buffer.from(excelBuffer);
+  }
+
+  async exportEnhancedPdfReport(
+    universityId: string,
+    timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ): Promise<Buffer> {
+    const departmentPerformance = await this.getEnhancedDepartmentPerformance(
+      universityId,
+      timeframe,
+    );
+    const bottlenecks = await this.getBottleneckAnalysis(universityId);
+
+    // Create PDF document
+    const doc = new jsPDF();
+    let yPosition = 20;
+
+    // Title
+    doc.setFontSize(20);
+    doc.text('Enhanced BHU Clearance Report', 20, yPosition);
+    yPosition += 20;
+
+    // Timeframe
+    doc.setFontSize(12);
+    doc.text(`Timeframe: ${timeframe || 'month'}`, 20, yPosition);
+    yPosition += 15;
+
+    // Department Performance Summary
+    doc.setFontSize(16);
+    doc.text('Department Performance Summary', 20, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(10);
+    departmentPerformance.slice(0, 8).forEach((dept) => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      const deptText = `${dept.department}: ${dept.metrics.approvalRate.toFixed(1)}% approval, ${dept.metrics.averageProcessingTimeHours}h avg, ${dept.metrics.overdueCount} overdue`;
+      doc.text(deptText, 20, yPosition);
+      yPosition += 8;
+    });
+
+    yPosition += 10;
+
+    // Bottleneck Analysis
+    doc.setFontSize(16);
+    doc.text('Bottleneck Analysis', 20, yPosition);
+    yPosition += 10;
+
+    const totalBottlenecks = bottlenecks.reduce(
+      (sum, dept) => sum + dept.bottlenecks.length,
+      0,
+    );
+    doc.setFontSize(12);
+    doc.text(`Total Bottlenecks: ${totalBottlenecks}`, 20, yPosition);
+    yPosition += 10;
+
+    if (bottlenecks.length > 0) {
+      doc.setFontSize(10);
+      bottlenecks.slice(0, 5).forEach((dept) => {
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        doc.text(
+          `${dept.department}: ${dept.bottlenecks.length} bottlenecks`,
+          20,
+          yPosition,
+        );
+        yPosition += 6;
+
+        dept.recommendations.slice(0, 2).forEach((rec: any) => {
+          doc.text(`  • ${rec}`, 25, yPosition);
+          yPosition += 5;
+        });
+        yPosition += 3;
+      });
+    }
+
+    // Generate buffer
+    return Buffer.from(doc.output('arraybuffer'));
+  }
+
+  private async generateDepartmentTrendData(
+    departmentName: string,
+    universityId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<any[]> {
+    const clearanceSteps = await this.prisma.clearanceStep.findMany({
+      where: {
+        department: departmentName,
+        clearance: {
+          universityId,
+          createdAt: { gte: startDate, lte: endDate },
+        },
+      },
+      select: {
+        createdAt: true,
+        status: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Group by week for trend data
+    const weeklyData = clearanceSteps.reduce(
+      (acc, step) => {
+        const weekStart = new Date(step.createdAt);
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week
+        const weekKey = weekStart.toISOString().slice(0, 10);
+
+        if (!acc[weekKey]) {
+          acc[weekKey] = {
+            date: weekKey,
+            processed: 0,
+            approved: 0,
+            rejected: 0,
+          };
+        }
+
+        acc[weekKey].processed += 1;
+        if (step.status === 'APPROVED') acc[weekKey].approved += 1;
+        if (step.status === 'REJECTED') acc[weekKey].rejected += 1;
+
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+
+    return Object.values(weeklyData);
+  }
+
+  private generateBottleneckRecommendations(bottlenecks: any[]): string[] {
+    const recommendations: string[] = [];
+    const criticalCount = bottlenecks.filter(
+      (b) => b.type === 'CRITICAL',
+    ).length;
+    const urgentCount = bottlenecks.filter((b) => b.type === 'URGENT').length;
+
+    if (criticalCount > 0) {
+      recommendations.push(
+        `Immediate action required: ${criticalCount} clearances are over 5 days old`,
+      );
+    }
+
+    if (urgentCount > 5) {
+      recommendations.push('Consider delegating approvals to reduce backlog');
+    }
+
+    if (bottlenecks.length > 20) {
+      recommendations.push(
+        'High workload detected: consider bulk processing or temporary staff assistance',
+      );
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push('Clearance processing is within acceptable limits');
+    }
+
+    return recommendations;
+  }
 }

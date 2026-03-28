@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import { StudentDashboard } from "./components/StudentDashboard";
-import { StaffDashboard } from "./components/StaffDashboard";
 import { AdminPanel } from "./components/AdminPanel";
+import { DepartmentDashboardWrapper } from "./components/DepartmentDashboardWrapper";
 
 type Step = {
   stepOrder: number;
@@ -18,6 +18,7 @@ type AuthState = {
   role: UserRole;
   email: string;
   displayName: string | null;
+  staffDepartment?: string; // For STAFF role - which department they belong to
 };
 
 function badge(status: Step["status"]) {
@@ -26,9 +27,16 @@ function badge(status: Step["status"]) {
   return "bg-slate-100 text-slate-700";
 }
 
+// ============================================================================
+// DEPARTMENT DASHBOARD ROUTER - Renders the appropriate department dashboard
+// ============================================================================
+
+// Note: This is now replaced by DepartmentDashboardWrapper which uses the new
+// department-specific dashboard architecture
+
 function App() {
   const [auth, setAuth] = useState<AuthState | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -49,19 +57,6 @@ function App() {
   const [notifs, setNotifs] = useState<
     Array<{ id: string; title: string; body: string; createdAt: string }>
   >([]);
-
-  const [pendingRows, setPendingRows] = useState<
-    Array<{
-      requestId: string;
-      referenceId: string;
-      studentUserId: string;
-      student?: Record<string, unknown>;
-      step: Step;
-    }>
-  >([]);
-  const [staffComment, setStaffComment] = useState("");
-  const [rejectReason, setRejectReason] = useState("");
-  const [rejectInstruction, setRejectInstruction] = useState("");
 
   const [adminSummary, setAdminSummary] = useState<{
     total: number;
@@ -92,6 +87,19 @@ function App() {
     [steps],
   );
 
+  // Load auth state from sessionStorage on app start
+  useEffect(() => {
+    const savedAuth = sessionStorage.getItem("authState");
+    if (savedAuth) {
+      try {
+        const parsedAuth = JSON.parse(savedAuth);
+        setAuth(parsedAuth);
+      } catch {
+        sessionStorage.removeItem("authState");
+      }
+    }
+  }, []);
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -99,24 +107,11 @@ function App() {
       // Ignore logout errors; we still clear local session.
     }
     setAuth(null);
+    sessionStorage.removeItem("authState");
     setSteps([]);
     setStudentMeta(null);
     setClearanceId(null);
   };
-
-  useEffect(() => {
-    void api
-      .get("/auth/me")
-      .then(({ data }) => {
-        setAuth({
-          role: data.role as UserRole,
-          email: data.email,
-          displayName: data.displayName,
-        });
-      })
-      .catch(() => setAuth(null))
-      .finally(() => setSessionLoading(false));
-  }, []);
 
   const login = async () => {
     setLoading(true);
@@ -128,14 +123,49 @@ function App() {
         : { email: loginEmail.trim(), password: loginPassword };
 
       const { data } = await api.post(endpoint, payload);
+      console.log("Login response:", data); // Debug: see actual response structure
+
+      // API returns wrapped response: { success, data: { access_token, user } }
+      const responseData = data.data || data;
+
+      if (!responseData.user) {
+        console.error(
+          "Invalid response structure - missing user:",
+          responseData,
+        );
+        throw new Error("Invalid server response: user data missing");
+      }
+
       setAuth({
-        role: data.user.role as UserRole,
-        email: data.user.email,
-        displayName: data.user.displayName,
+        role: responseData.user.role as UserRole,
+        email: responseData.user.email,
+        displayName: responseData.user.displayName,
+        staffDepartment: responseData.user.staffDepartment,
       });
+      // Save auth state to sessionStorage
+      sessionStorage.setItem(
+        "authState",
+        JSON.stringify({
+          role: responseData.user.role as UserRole,
+          email: responseData.user.email,
+          displayName: responseData.user.displayName,
+          staffDepartment: responseData.user.staffDepartment,
+        }),
+      );
       setLoginPassword("");
-    } catch {
-      setError("Login failed. Check email and password.");
+    } catch (e: unknown) {
+      const axiosError = e as {
+        userMessage?: string;
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMsg =
+        axiosError.userMessage ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Unknown error";
+      console.error("Login error:", errorMsg, e);
+      setError(`Login failed: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -150,20 +180,22 @@ function App() {
         api.get("/student/clearances/dashboard"),
         api.get("/notifications"),
       ]);
-      const s = dash.data.student;
+      // Handle wrapped responses: { data: { ... } } or direct { ... }
+      const dashData = dash.data.data || dash.data;
+      const s = dashData.student;
       setStudentMeta({
         name: s.name ?? s.email,
         studentId: s.studentUniversityId,
         department: s.studentDepartment,
         year: s.studentYear,
       });
-      const c = dash.data.clearance;
+      const c = dashData.clearance;
       if (c) {
         setSteps(c.steps);
         setClearanceStatus(c.status);
         setReferenceId(c.referenceId);
         setClearanceId(c.id);
-        setCanCert(dash.data.canDownloadCertificate);
+        setCanCert(dashData.canDownloadCertificate);
       } else {
         setSteps([]);
         setClearanceStatus("");
@@ -171,7 +203,9 @@ function App() {
         setClearanceId(null);
         setCanCert(false);
       }
-      setNotifs(n.data);
+      // Handle wrapped notifications response
+      const notifsData = n.data.data || n.data;
+      setNotifs(Array.isArray(notifsData) ? notifsData : []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load student data");
     } finally {
@@ -181,20 +215,8 @@ function App() {
 
   const loadStaff = useCallback(async () => {
     if (!auth || auth.role !== "STAFF") return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [pend, n] = await Promise.all([
-        api.get("/staff/clearances/pending"),
-        api.get("/notifications"),
-      ]);
-      setPendingRows(pend.data);
-      setNotifs(n.data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load staff queue");
-    } finally {
-      setLoading(false);
-    }
+    // Staff data is now loaded by DepartmentDashboardWrapper
+    setNotifs([]);
   }, [auth]);
 
   const loadAdmin = useCallback(async () => {
@@ -206,8 +228,11 @@ function App() {
         api.get("/admin/reports/summary"),
         api.get("/admin/audit"),
       ]);
-      setAdminSummary(sum.data);
-      setAuditLog(audit.data);
+      // Handle wrapped responses: { data: { ... } } or direct { ... }
+      const summaryData = sum.data.data || sum.data;
+      const auditData = audit.data.data || audit.data;
+      setAdminSummary(summaryData);
+      setAuditLog(Array.isArray(auditData) ? auditData : []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load admin data");
     } finally {
@@ -285,39 +310,9 @@ function App() {
     }
   };
 
-  const review = async (status: "APPROVED" | "REJECTED") => {
-    const row = pendingRows[0];
-    if (!row) return;
-    if (!staffComment.trim() || staffComment.trim().length < 2) {
-      setError("Approval/rejection requires a comment (min 2 characters).");
-      return;
-    }
-    if (
-      status === "REJECTED" &&
-      (!rejectReason.trim() || !rejectInstruction.trim())
-    ) {
-      setError("Rejection requires both reason and instruction.");
-      return;
-    }
-    setError(null);
-    try {
-      await api.patch(
-        `/staff/clearances/${row.requestId}/steps/${row.step.stepOrder}/review`,
-        {
-          status,
-          comment: staffComment.trim(),
-          reason: status === "REJECTED" ? rejectReason.trim() : undefined,
-          instruction:
-            status === "REJECTED" ? rejectInstruction.trim() : undefined,
-        },
-      );
-      setStaffComment("");
-      setRejectReason("");
-      setRejectInstruction("");
-      await loadStaff();
-    } catch {
-      setError("Review failed — check step order and permissions.");
-    }
+  const handleDepartmentReview = async () => {
+    // This function is now handled by DepartmentDashboardWrapper
+    // Department review functionality moved to specialized dashboard
   };
 
   if (sessionLoading) {
@@ -424,17 +419,11 @@ function App() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl p-4 md:p-8">
-      <header className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              BHU Student Clearance
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Signed in as <strong>{auth.displayName ?? auth.email}</strong> (
-              {auth.role})
-            </p>
-          </div>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-slate-900">
+            BHU Student Clearance
+          </h1>
           <button
             type="button"
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700"
@@ -443,19 +432,10 @@ function App() {
             Sign out
           </button>
         </div>
-        {loading && <p className="mt-3 text-sm text-slate-500">Loading…</p>}
-        {error && (
-          <p
-            className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
-      </header>
-
+      </div>
       {auth.role === "STUDENT" && (
         <StudentDashboard
+          loading={loading}
           studentMeta={studentMeta}
           clearanceId={clearanceId}
           clearanceStatus={clearanceStatus}
@@ -476,19 +456,8 @@ function App() {
         />
       )}
 
-      {auth.role === "STAFF" && (
-        <StaffDashboard
-          notifs={notifs}
-          pendingRows={pendingRows}
-          staffComment={staffComment}
-          setStaffComment={setStaffComment}
-          rejectReason={rejectReason}
-          setRejectReason={setRejectReason}
-          rejectInstruction={rejectInstruction}
-          setRejectInstruction={setRejectInstruction}
-          onApprove={() => void review("APPROVED")}
-          onReject={() => void review("REJECTED")}
-        />
+      {auth.role === "STAFF" && auth.staffDepartment && (
+        <DepartmentDashboardWrapper departmentName={auth.staffDepartment} />
       )}
 
       {auth.role === "ADMIN" && (

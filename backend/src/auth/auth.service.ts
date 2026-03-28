@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -21,7 +22,18 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.users.findByEmail(dto.email);
+    if (!dto.email?.trim()) {
+      throw new BadRequestException('Email is required');
+    }
+
+    if (!dto.password || dto.password.length < 10) {
+      throw new BadRequestException(
+        'Password must be at least 10 characters long',
+      );
+    }
+
+    const normalizedEmail = dto.email.toLowerCase().trim();
+    const existing = await this.users.findByEmail(normalizedEmail);
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -32,10 +44,10 @@ export class AuthService {
       throw new ConflictException('No active university configured');
     }
 
-    if (dto.studentUniversityId) {
-      const existingId = await this.users.findByStudentUniversityId(
-        dto.studentUniversityId.trim(),
-      );
+    if (dto.studentUniversityId?.trim()) {
+      const normalizedStudentId = dto.studentUniversityId.trim();
+      const existingId =
+        await this.users.findByStudentUniversityId(normalizedStudentId);
       if (existingId) {
         throw new ConflictException('Student university ID already registered');
       }
@@ -43,13 +55,13 @@ export class AuthService {
 
     const user = await this.users.create({
       universityId: defaultUniversityId,
-      email: dto.email,
+      email: normalizedEmail,
       passwordHash,
-      displayName: dto.displayName,
+      displayName: dto.displayName?.trim() || undefined,
       role: Role.STUDENT,
-      studentUniversityId: dto.studentUniversityId?.trim() || null,
-      studentDepartment: dto.studentDepartment?.trim() || null,
-      studentYear: dto.studentYear?.trim() || null,
+      studentUniversityId: dto.studentUniversityId?.trim() || undefined,
+      studentDepartment: dto.studentDepartment?.trim() || undefined,
+      studentYear: dto.studentYear?.trim() || undefined,
     });
 
     return this.buildAuthResponse(
@@ -58,26 +70,42 @@ export class AuthService {
       user.email,
       user.role,
       user.displayName,
+      user.staffDepartment,
     );
   }
 
   async login(dto: LoginDto) {
-    const user = await this.users.findByEmail(dto.email);
+    if (!dto.email?.trim()) {
+      throw new BadRequestException('Email is required');
+    }
+
+    const normalizedEmail = dto.email.toLowerCase().trim();
+    const user = await this.users.findByEmail(normalizedEmail);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // For development: Skip password check and login based on email
-    // Remove this in production!
+    // Check if user account is active
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    // For development: Skip password check and login based on email only
+    // Remove this block in production!
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔓 Development login: ${dto.email} as ${user.role}`);
       return this.buildAuthResponse(
         user.id,
         user.universityId,
         user.email,
         user.role,
         user.displayName,
+        user.staffDepartment,
       );
+    }
+
+    // Production: Validate password
+    if (!dto.password || dto.password.length < 1) {
+      throw new BadRequestException('Password is required');
     }
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
@@ -91,6 +119,7 @@ export class AuthService {
       user.email,
       user.role,
       user.displayName,
+      user.staffDepartment,
     );
   }
 
@@ -119,6 +148,7 @@ export class AuthService {
     email: string,
     role: Role,
     displayName: string | null,
+    staffDepartment?: string | null,
   ) {
     const payload: JwtPayload = { sub: userId, universityId, email, role };
     const access_token = await this.jwt.signAsync(payload);
@@ -131,6 +161,7 @@ export class AuthService {
         email,
         role,
         displayName,
+        staffDepartment,
       },
     };
   }

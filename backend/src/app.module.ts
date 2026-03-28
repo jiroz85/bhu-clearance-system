@@ -12,6 +12,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { CertificateModule } from './certificate/certificate.module';
 import { CommonModule } from './common/common.module';
+import { HODDashboardModule } from './hod-dashboard/hod-dashboard.module';
+import { ReportingModule } from './reporting/reporting.module';
+import { DepartmentModule } from './department/department.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { CommonModule } from './common/common.module';
     ClearanceModule,
     AdminModule,
     CertificateModule,
+    HODDashboardModule,
+    ReportingModule,
+    DepartmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

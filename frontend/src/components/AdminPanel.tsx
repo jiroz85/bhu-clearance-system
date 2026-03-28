@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 
 type User = {
@@ -16,10 +17,17 @@ type User = {
 };
 
 type UsersResponse = {
-  users: User[];
-  total: number;
-  skip: number;
-  take: number;
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    users: User[];
+    total: number;
+    skip: number;
+    take: number;
+  };
+  timestamp: string;
+  path: string;
 };
 
 type CreateUserDto = {
@@ -64,11 +72,31 @@ export function AdminPanel(props: {
   }>;
 }) {
   const { adminSummary, auditLog } = props;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // User Management State
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "reports">(
     "overview",
   );
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (tabFromUrl === "users" || tabFromUrl === "reports") {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: "overview" | "users" | "reports") => {
+    setActiveTab(tab);
+    if (tab === "overview") {
+      searchParams.delete("tab");
+    } else {
+      searchParams.set("tab", tab);
+    }
+    setSearchParams(searchParams);
+  };
   const [users, setUsers] = useState<User[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -98,7 +126,7 @@ export function AdminPanel(props: {
   } | null>(null);
 
   // Reports state
-  const [reportsData, setReportsData] = useState<any>(null);
+  const [reportsData, setReportsData] = useState<unknown>(null);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateUserDto>({
@@ -112,7 +140,7 @@ export function AdminPanel(props: {
     studentYear: "",
   });
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setUsersLoading(true);
     setUsersError(null);
     try {
@@ -126,14 +154,16 @@ export function AdminPanel(props: {
       if (statusFilter !== "ALL") params.append("status", statusFilter);
 
       const { data } = await api.get<UsersResponse>(`/admin/users?${params}`);
-      setUsers(data.users);
-      setUsersTotal(data.total);
-    } catch (error: any) {
-      setUsersError(error.message || "Failed to load users");
+      setUsers(data.data?.users || []);
+      setUsersTotal(data.data?.total || 0);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to load users";
+      setUsersError(errorMessage);
     } finally {
       setUsersLoading(false);
     }
-  };
+  }, [skip, take, search, roleFilter, statusFilter]);
 
   const loadReports = async () => {
     setReportsLoading(true);
@@ -141,8 +171,10 @@ export function AdminPanel(props: {
     try {
       const { data } = await api.get("/admin/reports/summary");
       setReportsData(data);
-    } catch (error: any) {
-      setReportsError(error.message || "Failed to load reports");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to load reports";
+      setReportsError(errorMessage);
     } finally {
       setReportsLoading(false);
     }
@@ -154,7 +186,7 @@ export function AdminPanel(props: {
     } else if (activeTab === "reports") {
       loadReports();
     }
-  }, [activeTab, skip, search, roleFilter, statusFilter]);
+  }, [activeTab, loadUsers]);
 
   const handleCreateUser = async () => {
     try {
@@ -171,8 +203,10 @@ export function AdminPanel(props: {
         studentYear: "",
       });
       loadUsers();
-    } catch (error: any) {
-      setUsersError(error.message || "Failed to create user");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create user";
+      setUsersError(errorMessage);
     }
   };
 
@@ -181,8 +215,10 @@ export function AdminPanel(props: {
       await api.patch(`/api/admin/users/${userId}`, updates);
       setEditingUser(null);
       loadUsers();
-    } catch (error: any) {
-      setUsersError(error.message || "Failed to update user");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update user";
+      setUsersError(errorMessage);
     }
   };
 
@@ -190,10 +226,12 @@ export function AdminPanel(props: {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      await api.delete(`/api/admin/users/${userId}`);
+      await api.delete(`/admin/users/${userId}`);
       loadUsers();
-    } catch (error: any) {
-      setUsersError(error.message || "Failed to delete user");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete user";
+      setUsersError(errorMessage);
     }
   };
 
@@ -212,7 +250,7 @@ export function AdminPanel(props: {
 
           for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(",").map((v) => v.trim());
-            const user: any = {};
+            const user: Record<string, string> = {};
 
             headers.forEach((header, index) => {
               const value = values[index] || "";
@@ -280,8 +318,10 @@ export function AdminPanel(props: {
       setShowBulkImport(false);
       setBulkImportFile(null);
       loadUsers();
-    } catch (error: any) {
-      setUsersError(error.message || "Failed to import users");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to import users";
+      setUsersError(errorMessage);
     } finally {
       setBulkImportLoading(false);
     }
@@ -324,7 +364,7 @@ export function AdminPanel(props: {
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-slate-600 hover:text-slate-900"
             }`}
-            onClick={() => setActiveTab("overview")}
+            onClick={() => handleTabChange("overview")}
           >
             Overview
           </button>
@@ -334,7 +374,7 @@ export function AdminPanel(props: {
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-slate-600 hover:text-slate-900"
             }`}
-            onClick={() => setActiveTab("users")}
+            onClick={() => handleTabChange("users")}
           >
             User Management
           </button>
@@ -344,7 +384,7 @@ export function AdminPanel(props: {
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-slate-600 hover:text-slate-900"
             }`}
-            onClick={() => setActiveTab("reports")}
+            onClick={() => handleTabChange("reports")}
           >
             Reports & Analytics
           </button>
@@ -455,7 +495,11 @@ export function AdminPanel(props: {
               <select
                 className="rounded border border-slate-200 px-3 py-2 text-sm"
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as any)}
+                onChange={(e) =>
+                  setRoleFilter(
+                    e.target.value as "ALL" | "STUDENT" | "STAFF" | "ADMIN",
+                  )
+                }
               >
                 <option value="ALL">All Roles</option>
                 <option value="STUDENT">Student</option>
@@ -465,7 +509,15 @@ export function AdminPanel(props: {
               <select
                 className="rounded border border-slate-200 px-3 py-2 text-sm"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as
+                      | "ALL"
+                      | "ACTIVE"
+                      | "INACTIVE"
+                      | "SUSPENDED",
+                  )
+                }
               >
                 <option value="ALL">All Status</option>
                 <option value="ACTIVE">Active</option>
@@ -476,7 +528,7 @@ export function AdminPanel(props: {
 
             {/* Users Count */}
             <div className="mt-2 text-sm text-slate-600">
-              Showing {users.length} of {usersTotal} users
+              Showing {users?.length || 0} of {usersTotal} users
             </div>
           </div>
 
@@ -502,7 +554,7 @@ export function AdminPanel(props: {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user) => (
+                    {(users || []).map((user) => (
                       <tr key={user.id} className="border-b border-slate-100">
                         <td className="py-3">
                           <div>
@@ -561,7 +613,7 @@ export function AdminPanel(props: {
                     ))}
                   </tbody>
                 </table>
-                {users.length === 0 && (
+                {(users?.length || 0) === 0 && (
                   <p className="py-8 text-center text-sm text-slate-500">
                     No users found
                   </p>
@@ -635,7 +687,10 @@ export function AdminPanel(props: {
                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                 value={formData.role}
                 onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value as any })
+                  setFormData({
+                    ...formData,
+                    role: e.target.value as "STUDENT" | "STAFF",
+                  })
                 }
               >
                 <option value="STUDENT">Student</option>
@@ -743,7 +798,10 @@ export function AdminPanel(props: {
                 onChange={(e) =>
                   setEditingUser({
                     ...editingUser,
-                    status: e.target.value as any,
+                    status: e.target.value as
+                      | "ACTIVE"
+                      | "INACTIVE"
+                      | "SUSPENDED",
                   })
                 }
               >
@@ -817,12 +875,14 @@ export function AdminPanel(props: {
                 className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 onClick={() => {
                   const updates: UpdateUserDto = {
-                    displayName: editingUser.displayName,
+                    displayName: editingUser.displayName || undefined,
                     status: editingUser.status,
-                    staffDepartment: editingUser.staffDepartment,
-                    studentUniversityId: editingUser.studentUniversityId,
-                    studentDepartment: editingUser.studentDepartment,
-                    studentYear: editingUser.studentYear,
+                    staffDepartment: editingUser.staffDepartment || undefined,
+                    studentUniversityId:
+                      editingUser.studentUniversityId || undefined,
+                    studentDepartment:
+                      editingUser.studentDepartment || undefined,
+                    studentYear: editingUser.studentYear || undefined,
                   };
                   handleUpdateUser(editingUser.id, updates);
                 }}
@@ -970,33 +1030,38 @@ export function AdminPanel(props: {
                       <tbody>
                         {reportsData?.rejectionRateByDepartment
                           ?.slice(0, 10)
-                          ?.map((dept: any, index: number) => (
-                            <tr
-                              key={index}
-                              className="border-b border-slate-100"
-                            >
-                              <td className="py-2 font-medium">
-                                {dept?.department ?? "Unknown"}
-                              </td>
-                              <td className="py-2">{dept?.total ?? 0}</td>
-                              <td className="py-2 text-red-600">
-                                {dept?.rejected ?? 0}
-                              </td>
-                              <td className="py-2">
-                                <span
-                                  className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                    (dept?.rejectionRate ?? 0) > 20
-                                      ? "bg-red-100 text-red-700"
-                                      : (dept?.rejectionRate ?? 0) > 10
-                                        ? "bg-amber-100 text-amber-700"
-                                        : "bg-green-100 text-green-700"
-                                  }`}
-                                >
-                                  {dept?.rejectionRate?.toFixed?.(1) ?? 0}%
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          ?.map(
+                            (
+                              dept: { department?: string; rate?: number },
+                              index: number,
+                            ) => (
+                              <tr
+                                key={index}
+                                className="border-b border-slate-100"
+                              >
+                                <td className="py-2 font-medium">
+                                  {dept?.department ?? "Unknown"}
+                                </td>
+                                <td className="py-2">{dept?.total ?? 0}</td>
+                                <td className="py-2 text-red-600">
+                                  {dept?.rejected ?? 0}
+                                </td>
+                                <td className="py-2">
+                                  <span
+                                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                      (dept?.rejectionRate ?? 0) > 20
+                                        ? "bg-red-100 text-red-700"
+                                        : (dept?.rejectionRate ?? 0) > 10
+                                          ? "bg-amber-100 text-amber-700"
+                                          : "bg-green-100 text-green-700"
+                                    }`}
+                                  >
+                                    {dept?.rejectionRate?.toFixed?.(1) ?? 0}%
+                                  </span>
+                                </td>
+                              </tr>
+                            ),
+                          )}
                       </tbody>
                     </table>
                   </div>
@@ -1021,28 +1086,38 @@ export function AdminPanel(props: {
                         {reportsData?.monthlyTrends
                           ?.slice(-12)
                           ?.reverse()
-                          ?.map((trend: any, index: number) => (
-                            <tr
-                              key={index}
-                              className="border-b border-slate-100"
-                            >
-                              <td className="py-2 font-medium">
-                                {new Date(
-                                  trend?.month + "-01",
-                                ).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "short",
-                                })}
-                              </td>
-                              <td className="py-2">{trend?.started ?? 0}</td>
-                              <td className="py-2 text-green-600">
-                                {trend?.completed ?? 0}
-                              </td>
-                              <td className="py-2">
-                                {trend?.averageTimeDays?.toFixed?.(1) ?? 0}
-                              </td>
-                            </tr>
-                          ))}
+                          ?.map(
+                            (
+                              trend: {
+                                month?: string;
+                                completed?: number;
+                                total?: number;
+                                avgTime?: number;
+                              },
+                              index: number,
+                            ) => (
+                              <tr
+                                key={index}
+                                className="border-b border-slate-100"
+                              >
+                                <td className="py-2 font-medium">
+                                  {new Date(
+                                    trend?.month + "-01",
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                  })}
+                                </td>
+                                <td className="py-2">{trend?.started ?? 0}</td>
+                                <td className="py-2 text-green-600">
+                                  {trend?.completed ?? 0}
+                                </td>
+                                <td className="py-2">
+                                  {trend?.averageTimeDays?.toFixed?.(1) ?? 0}
+                                </td>
+                              </tr>
+                            ),
+                          )}
                       </tbody>
                     </table>
                   </div>
@@ -1054,9 +1129,16 @@ export function AdminPanel(props: {
                     Department Performance Overview
                   </h3>
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {reportsData?.bottleneckDepartments
-                      ?.slice(0, 6)
-                      ?.map((dept: any, index: number) => (
+                    {reportsData?.bottleneckDepartments?.slice(0, 6)?.map(
+                      (
+                        dept: {
+                          department?: string;
+                          averageProcessingTimeDays?: number;
+                          pendingCount?: number;
+                          totalProcessed?: number;
+                        },
+                        index: number,
+                      ) => (
                         <div
                           key={index}
                           className="rounded-lg border border-slate-200 p-3"
@@ -1088,7 +1170,8 @@ export function AdminPanel(props: {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ),
+                    )}
                   </div>
                 </div>
               </div>

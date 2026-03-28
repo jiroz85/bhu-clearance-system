@@ -4,13 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Role, UserStatus } from '../../generated/prisma/enums';
+import { Role } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import type { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import type { AdminListUsersDto } from './dto/admin-list-users.dto';
-import type { BulkImportDto } from './dto/bulk-import.dto';
+import type { BulkImportDto, BulkImportUserDto } from './dto/bulk-import.dto';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -22,6 +22,17 @@ export class AdminService {
   ) {}
 
   async createUser(dto: AdminCreateUserDto, actorUserId: string) {
+    // Input sanitization
+    const sanitizedDto = {
+      ...dto,
+      email: dto.email.toLowerCase().trim(),
+      displayName: dto.displayName.trim(),
+      staffDepartment: dto.staffDepartment?.trim(),
+      studentUniversityId: dto.studentUniversityId?.trim(),
+      studentDepartment: dto.studentDepartment?.trim(),
+      studentYear: dto.studentYear?.trim(),
+    };
+
     const actor = await this.prisma.user.findUnique({
       where: { id: actorUserId },
       select: { universityId: true },
@@ -30,20 +41,20 @@ export class AdminService {
       throw new BadRequestException('Invalid admin actor');
     }
 
-    if (dto.role === Role.STAFF) {
-      if (!dto.staffDepartment?.trim()) {
+    if (sanitizedDto.role === Role.STAFF) {
+      if (!sanitizedDto.staffDepartment?.trim()) {
         throw new BadRequestException('Staff users require staffDepartment');
       }
     }
 
-    const email = dto.email.toLowerCase().trim();
+    const email = sanitizedDto.email;
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw new BadRequestException('Email already registered');
     }
 
-    if (dto.studentUniversityId) {
-      const sid = dto.studentUniversityId.trim();
+    if (sanitizedDto.studentUniversityId) {
+      const sid = sanitizedDto.studentUniversityId;
       const dup = await this.prisma.user.findUnique({
         where: { studentUniversityId: sid },
       });
@@ -52,11 +63,16 @@ export class AdminService {
       }
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const passwordHash = await bcrypt.hash(
+      sanitizedDto.password ||
+        Math.random().toString(36).slice(-8) +
+          Math.random().toString(36).slice(-8),
+      BCRYPT_ROUNDS,
+    );
 
     let staffDept: string | null = null;
-    if (dto.role === Role.STAFF) {
-      const staffDeptInput = dto.staffDepartment!.trim();
+    if (sanitizedDto.role === Role.STAFF) {
+      const staffDeptInput = sanitizedDto.staffDepartment!.trim();
       const dep = await this.prisma.department.findFirst({
         where: {
           universityId: actor.universityId,
@@ -65,7 +81,7 @@ export class AdminService {
       });
       if (!dep) {
         throw new BadRequestException(
-          `staffDepartment must match an entry in departments. Got: ${dto.staffDepartment}`,
+          `staffDepartment must match an entry in departments. Got: ${sanitizedDto.staffDepartment}`,
         );
       }
       staffDept = dep.name;
@@ -76,12 +92,13 @@ export class AdminService {
         email,
         universityId: actor.universityId,
         passwordHash,
-        displayName: dto.displayName.trim(),
-        role: dto.role,
+        displayName: sanitizedDto.displayName,
+        role: sanitizedDto.role,
         staffDepartment: staffDept,
-        studentUniversityId: dto.studentUniversityId?.trim() || null,
-        studentDepartment: dto.studentDepartment?.trim() || null,
-        studentYear: dto.studentYear?.trim() || null,
+        studentUniversityId: sanitizedDto.studentUniversityId || null,
+        studentDepartment: sanitizedDto.studentDepartment || null,
+        studentYear: sanitizedDto.studentYear || null,
+        status: sanitizedDto.status,
       },
       select: {
         id: true,
@@ -93,6 +110,7 @@ export class AdminService {
         studentDepartment: true,
         studentYear: true,
         createdAt: true,
+        status: true,
       },
     });
 
@@ -114,7 +132,7 @@ export class AdminService {
 
     const { skip = 0, take = 50, search, role, status, staffDepartment } = dto;
 
-    const where: any = {
+    const where: Record<string, any> = {
       universityId: actor.universityId,
     };
 
@@ -221,7 +239,7 @@ export class AdminService {
       }
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
     if (dto.displayName !== undefined)
       updateData.displayName = dto.displayName.trim();
     if (dto.role !== undefined) updateData.role = dto.role;
@@ -255,7 +273,7 @@ export class AdminService {
 
     await this.audit.log(actorUserId, 'ADMIN_USER_UPDATED', 'user', userId, {
       updatedFields: Object.keys(updateData),
-    });
+    } as Record<string, any>);
 
     return updated;
   }
@@ -319,23 +337,27 @@ export class AdminService {
     };
 
     for (let i = 0; i < dto.users.length; i++) {
-      const userDto = dto.users[i];
+      const userDto: BulkImportUserDto = dto.users[i];
       try {
-        const password =
-          Math.random().toString(36).slice(-8) +
-          Math.random().toString(36).slice(-8);
+        // Create AdminCreateUserDto properly with auto-generated password if not provided
+        const createUserDto: AdminCreateUserDto = {
+          email: userDto.email,
+          password: userDto.password || this.generateSecurePassword(),
+          displayName: userDto.displayName,
+          role: userDto.role,
+          staffDepartment: userDto.staffDepartment,
+          studentUniversityId: userDto.studentUniversityId,
+          studentDepartment: userDto.studentDepartment,
+          studentYear: userDto.studentYear,
+        };
 
-        await this.createUser(
-          {
-            ...userDto,
-            password,
-          },
-          actorUserId,
-        );
+        await this.createUser(createUserDto, actorUserId);
         results.created++;
-      } catch (error: any) {
+      } catch (error: unknown) {
         results.failed++;
-        results.errors.push(`Row ${i + 1}: ${error.message}`);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.errors.push(`Row ${i + 1}: ${errorMessage}`);
       }
     }
 
@@ -352,5 +374,16 @@ export class AdminService {
     );
 
     return results;
+  }
+
+  private generateSecurePassword(): string {
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const length = 16;
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   }
 }

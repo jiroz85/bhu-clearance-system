@@ -1,0 +1,382 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { DepartmentPermission } from './department.types';
+import { getDepartmentConfig } from './department.config';
+import { ClearanceService } from '../clearance/clearance.service';
+
+@Injectable()
+export class DepartmentService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly clearanceService: ClearanceService,
+  ) {}
+
+  async getDepartmentUsers(departmentId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        staffDepartment: {
+          equals: departmentId,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        staffDepartment: true,
+        status: true,
+      },
+    });
+  }
+
+  async getDepartmentQueue(
+    departmentName: string,
+    filters?: {
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+      overdue?: boolean;
+      search?: string;
+    },
+  ) {
+    try {
+      const departmentConfig = getDepartmentConfig(departmentName);
+      if (!departmentConfig) {
+        throw new NotFoundException(`Department ${departmentName} not found`);
+      }
+
+      console.log(`Getting queue for department: ${departmentName}`);
+
+      // Simplified query for testing
+      const clearances = await this.prisma.clearance.findMany({
+        where: {
+          status: 'SUBMITTED', // Only get submitted clearances
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              displayName: true,
+              studentUniversityId: true,
+              studentDepartment: true,
+              studentYear: true,
+            },
+          },
+          steps: {
+            where: {
+              department: departmentName,
+            },
+            include: {
+              reviews: {
+                include: {
+                  reviewer: {
+                    select: {
+                      id: true,
+                      displayName: true,
+                      email: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          submittedAt: 'desc',
+        },
+        take: 50, // Limit for testing
+      });
+
+      console.log(`Found ${clearances.length} clearances`);
+
+      // Filter and transform the results
+      const queue = clearances
+        .map((clearance) => {
+          const step = clearance.steps.find(
+            (s) => s.department === departmentName,
+          );
+          if (!step) {
+            console.log(
+              `No step found for department ${departmentName} in clearance ${clearance.referenceId}`,
+            );
+            return null;
+          }
+
+          // Only include steps that are still pending
+          if (step.status !== 'PENDING') {
+            console.log(
+              `Step ${step.id} for clearance ${clearance.referenceId} is not pending (status: ${step.status})`,
+            );
+            return null;
+          }
+
+          console.log(
+            `Including pending step ${step.id} for clearance ${clearance.referenceId}`,
+          );
+          return {
+            id: clearance.id,
+            referenceId: clearance.referenceId,
+            student: clearance.student,
+            step: {
+              id: step.id,
+              stepOrder: step.stepOrder,
+              department: step.department,
+              status: step.status,
+              comment: step.comment,
+              reviewedAt: step.reviewedAt,
+              reviews: step.reviews,
+            },
+            submittedAt: clearance.submittedAt,
+            status: clearance.status,
+          };
+        })
+        .filter((item) => item !== null);
+
+      console.log(`Returning ${queue.length} queue items`);
+      return queue;
+    } catch (error) {
+      console.error('Error in getDepartmentQueue:', error);
+      throw error;
+    }
+  }
+
+  async getDepartmentMetrics(
+    departmentName: string,
+    timeframe?: 'day' | 'week' | 'month',
+  ) {
+    try {
+      console.log(`Getting real metrics for department: ${departmentName}`);
+
+      // Calculate date filter based on timeframe
+      const now = new Date();
+      let startDate = new Date();
+
+      switch (timeframe) {
+        case 'day':
+          startDate.setDate(now.getDate() - 1);
+          break;
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 7);
+      }
+
+      // Get all steps for this department within the timeframe
+      const steps = await this.prisma.clearanceStep.findMany({
+        where: {
+          department: departmentName,
+          clearance: {
+            submittedAt: {
+              gte: startDate,
+            },
+          },
+        },
+        include: {
+          clearance: {
+            select: {
+              submittedAt: true,
+              studentUserId: true,
+              referenceId: true,
+            },
+          },
+          reviews: {
+            include: {
+              reviewer: {
+                select: {
+                  displayName: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          clearance: {
+            submittedAt: 'desc',
+          },
+        },
+      });
+
+      console.log(
+        `Found ${steps.length} steps for department ${departmentName} in timeframe`,
+      );
+
+      // Calculate metrics
+      const total = steps.length;
+      const approved = steps.filter((s) => s.status === 'APPROVED').length;
+      const rejected = steps.filter((s) => s.status === 'REJECTED').length;
+      const pending = steps.filter((s) => s.status === 'PENDING').length;
+
+      const approvalRate = total > 0 ? (approved / total) * 100 : 0;
+      const rejectionRate = total > 0 ? (rejected / total) * 100 : 0;
+
+      // Calculate average processing time for approved/rejected steps
+      const processedSteps = steps.filter(
+        (s) =>
+          s.status !== 'PENDING' && s.reviewedAt && s.clearance.submittedAt,
+      );
+      const averageProcessingTime =
+        processedSteps.length > 0
+          ? processedSteps.reduce((acc, step) => {
+              const processingHours =
+                (step.reviewedAt!.getTime() -
+                  step.clearance.submittedAt!.getTime()) /
+                (1000 * 60 * 60);
+              return acc + processingHours;
+            }, 0) / processedSteps.length
+          : 0;
+
+      // Count overdue pending steps (older than 24 hours)
+      const overdueCount = steps.filter(
+        (s) =>
+          s.status === 'PENDING' &&
+          s.clearance.submittedAt &&
+          Date.now() - s.clearance.submittedAt.getTime() > 24 * 60 * 60 * 1000,
+      ).length;
+
+      const metrics = {
+        timeframe: timeframe || 'week',
+        summary: {
+          total,
+          approved,
+          rejected,
+          pending,
+          approvalRate: Math.round(approvalRate * 10) / 10,
+          rejectionRate: Math.round(rejectionRate * 10) / 10,
+        },
+        trends: [], // Could be implemented later
+        performance: {
+          averageProcessingTime: Math.round(averageProcessingTime * 10) / 10,
+          overdueCount,
+        },
+      };
+
+      console.log(`Calculated metrics for ${departmentName}:`, metrics.summary);
+      return metrics;
+    } catch (error) {
+      console.error('Error in getDepartmentMetrics:', error);
+      throw error;
+    }
+  }
+
+  async checkUserDepartmentPermission(
+    userId: string,
+    departmentName: string,
+    permission: DepartmentPermission,
+  ): Promise<boolean> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          role: true,
+          staffDepartment: true,
+        },
+      });
+
+      if (!user) {
+        return false;
+      }
+
+      // Admin has all permissions
+      if (user.role === 'ADMIN') {
+        return true;
+      }
+
+      // Check if user belongs to the department
+      if (user.staffDepartment !== departmentName) {
+        return false;
+      }
+
+      // For now, allow all staff permissions for their department
+      return true;
+    } catch (error) {
+      console.error('Error in checkUserDepartmentPermission:', error);
+      return false;
+    }
+  }
+
+  async approveStep(
+    stepId: string,
+    reviewerUserId: string,
+    departmentData?: Record<string, any>,
+  ) {
+    // Find the step to get clearance details
+    const step = await this.prisma.clearanceStep.findUnique({
+      where: { id: stepId },
+      include: { clearance: true },
+    });
+
+    if (!step) {
+      throw new NotFoundException('Step not found');
+    }
+
+    // Get the reviewer's department
+    const reviewer = await this.prisma.user.findUnique({
+      where: { id: reviewerUserId },
+      select: { staffDepartment: true },
+    });
+
+    if (!reviewer?.staffDepartment) {
+      throw new BadRequestException('Reviewer has no department assigned');
+    }
+
+    // Call the real clearance service reviewStep method
+    return this.clearanceService.reviewStep(
+      reviewerUserId,
+      reviewer.staffDepartment,
+      step.clearanceId,
+      step.stepOrder,
+      {
+        status: 'APPROVED',
+        comment: 'Approved by department',
+      },
+    );
+  }
+
+  async rejectStep(
+    stepId: string,
+    reviewerUserId: string,
+    reason: string,
+    instruction?: string,
+    departmentData?: Record<string, any>,
+  ) {
+    // Find the step to get clearance details
+    const step = await this.prisma.clearanceStep.findUnique({
+      where: { id: stepId },
+      include: { clearance: true },
+    });
+
+    if (!step) {
+      throw new NotFoundException('Step not found');
+    }
+
+    // Get the reviewer's department
+    const reviewer = await this.prisma.user.findUnique({
+      where: { id: reviewerUserId },
+      select: { staffDepartment: true },
+    });
+
+    if (!reviewer?.staffDepartment) {
+      throw new BadRequestException('Reviewer has no department assigned');
+    }
+
+    // Call the real clearance service reviewStep method
+    return this.clearanceService.reviewStep(
+      reviewerUserId,
+      reviewer.staffDepartment,
+      step.clearanceId,
+      step.stepOrder,
+      {
+        status: 'REJECTED',
+        comment: reason,
+        reason: reason,
+        instruction: instruction || 'Please resolve the issue and resubmit',
+      },
+    );
+  }
+}

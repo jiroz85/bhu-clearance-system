@@ -1,0 +1,7 @@
+email,displayName,role,staffDepartment,studentUniversityId,studentDepartment,studentYear
+john.doe@bhu.edu.et,John Doe,STUDENT,,123456,Computer Science,3
+jane.smith@bhu.edu.et,Jane Smith,STUDENT,,123457,Information Technology,2
+admin.test@bhu.edu.et,Admin User,STAFF,Computer Science,,
+invalid.email,Invalid User,STUDENT,,123458,Computer Science,1
+missing.fields@bhu.edu.et,Missing Fields,,123459,Computer Science,2
+duplicate.email@bhu.edu.et,Duplicate Email,STUDENT,,123456,Computer Science,3

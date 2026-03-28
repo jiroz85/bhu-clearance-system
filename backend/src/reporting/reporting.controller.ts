@@ -34,8 +34,25 @@ export class ReportingController {
   @Get('department-performance')
   async getDepartmentPerformance(
     @CurrentUser('universityId') universityId: string,
+    @Query('timeframe') timeframe?: 'week' | 'month' | 'quarter' | 'year',
   ) {
-    return this.reportingService.getDepartmentPerformance(universityId);
+    return this.reportingService.getEnhancedDepartmentPerformance(
+      universityId,
+      timeframe,
+    );
+  }
+
+  @Get('bottlenecks')
+  async getBottlenecks(@CurrentUser('universityId') universityId: string) {
+    return this.reportingService.getBottleneckAnalysis(universityId);
+  }
+
+  @Get('trends')
+  async getTrends(
+    @CurrentUser('universityId') universityId: string,
+    @Query('timeframe') timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ) {
+    return this.reportingService.getClearanceTrends(universityId, timeframe);
   }
 
   @Get('export/excel')
@@ -93,6 +110,49 @@ export class ReportingController {
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=clearance-report.pdf',
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
+
+  @Get('export/enhanced-excel')
+  async exportEnhancedExcel(
+    @CurrentUser('universityId') universityId: string,
+    @Res() res: Response,
+    @Query('timeframe') timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ) {
+    const buffer = await this.reportingService.exportEnhancedExcelReport(
+      universityId,
+      timeframe,
+    );
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition':
+        'attachment; filename=enhanced-clearance-report.xlsx',
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
+
+  @Get('export/enhanced-pdf')
+  async exportEnhancedPdf(
+    @CurrentUser('universityId') universityId: string,
+    @Res() res: Response,
+    @Query('timeframe') timeframe?: 'week' | 'month' | 'quarter' | 'year',
+  ) {
+    const buffer = await this.reportingService.exportEnhancedPdfReport(
+      universityId,
+      timeframe,
+    );
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition':
+        'attachment; filename=enhanced-clearance-report.pdf',
       'Content-Length': buffer.length,
     });
 
