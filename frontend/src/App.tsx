@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { AdminPanel } from "./components/AdminPanel";
 import { DepartmentDashboardWrapper } from "./components/DepartmentDashboardWrapper";
+import CertificateVerification from "./components/CertificateVerification";
 
 type Step = {
+  id: string;
   stepOrder: number;
   department: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   comment: string;
-  reviewedAt: string | null;
+  reviewedAt?: string;
+  createdAt?: string;
 };
 
 type UserRole = "STUDENT" | "STAFF" | "ADMIN";
@@ -20,6 +24,14 @@ type AuthState = {
   displayName: string | null;
   staffDepartment?: string; // For STAFF role - which department they belong to
 };
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
 
 function badge(status: Step["status"]) {
   if (status === "APPROVED") return "bg-emerald-100 text-emerald-700";
@@ -36,8 +48,12 @@ function badge(status: Step["status"]) {
 
 function App() {
   const [auth, setAuth] = useState<AuthState | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(false);
+  const [sessionLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
+
+  // Check if we're on the public verification page
+  const isVerificationPage = window.location.pathname === "/verify";
+  const navigate = useNavigate();
   const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -191,7 +207,14 @@ function App() {
       });
       const c = dashData.clearance;
       if (c) {
-        setSteps(c.steps);
+        // Transform backend data to match frontend Step type
+        const transformedSteps = c.steps.map(
+          (s: Step & { reviewedAt: string | null }) => ({
+            ...s,
+            reviewedAt: s.reviewedAt || undefined,
+          }),
+        );
+        setSteps(transformedSteps);
         setClearanceStatus(c.status);
         setReferenceId(c.referenceId);
         setClearanceId(c.id);
@@ -300,20 +323,38 @@ function App() {
     setError(null);
     try {
       await api.post(`/student/clearances/${clearanceId}/recheck`, {
-        stepOrder: rejectedStep.stepOrder,
+        stepId: rejectedStep.id,
         message: recheckMessage.trim(),
       });
       setRecheckMessage("");
       await loadStudent();
-    } catch {
-      setError("Re-check failed (rejected steps only).");
+      // Show success message
+      setError(
+        "Re-check request sent successfully! The department will review your submission.",
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Re-check failed";
+      const apiError = error as ApiError;
+      const responseMessage = apiError?.response?.data?.message;
+      const finalMessage = responseMessage || errorMessage;
+
+      if (finalMessage.includes("current rejected step")) {
+        setError("You can only request recheck for the current rejected step.");
+      } else if (finalMessage.includes("only for rejected steps")) {
+        setError("Re-check is only available for rejected steps.");
+      } else {
+        setError(`Re-check failed: ${finalMessage}`);
+      }
     }
   };
 
-  const handleDepartmentReview = async () => {
-    // This function is now handled by DepartmentDashboardWrapper
-    // Department review functionality moved to specialized dashboard
-  };
+  // Department review functionality moved to DepartmentDashboardWrapper
+
+  // Show public verification page without authentication
+  if (isVerificationPage) {
+    return <CertificateVerification />;
+  }
 
   if (sessionLoading) {
     return (
@@ -390,6 +431,14 @@ function App() {
             onClick={() => void login()}
           >
             {loading ? "Signing in…" : quickLogin ? "Quick Sign In" : "Sign In"}
+          </button>
+
+          <button
+            type="button"
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            onClick={() => navigate("/verify")}
+          >
+            📋 Verify Certificate
           </button>
 
           <p className="mt-4 text-xs text-slate-500">

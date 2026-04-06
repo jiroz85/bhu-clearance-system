@@ -1,4 +1,5 @@
 type Step = {
+  id: string;
   stepOrder: number;
   department: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
@@ -213,7 +214,7 @@ export function StudentDashboard(props: {
               <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200"></div>
 
               {/* Timeline Items */}
-              {steps.map((step, index) => (
+              {steps.map((step) => (
                 <div
                   key={step.stepOrder}
                   className="relative flex items-start mb-6 last:mb-0"
@@ -299,6 +300,27 @@ export function StudentDashboard(props: {
                       </div>
                     )}
 
+                    {/* Resubmit button for rejected steps */}
+                    {step.status === "REJECTED" && (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                          onClick={() => {
+                            // Scroll to re-check section and pre-fill with step-specific message
+                            document
+                              .getElementById("recheck-msg")
+                              ?.scrollIntoView({ behavior: "smooth" });
+                            setRecheckMessage(
+                              `Resubmitted for ${step.department}: I have submitted the required items/documents.`,
+                            );
+                          }}
+                        >
+                          🔄 Resubmit for {step.department}
+                        </button>
+                      </div>
+                    )}
+
                     {/* Pending indicator */}
                     {step.status === "PENDING" && (
                       <div className="text-sm text-slate-500 italic">
@@ -346,36 +368,44 @@ export function StudentDashboard(props: {
                 htmlFor="recheck-msg"
                 className="text-xs font-medium text-slate-600"
               >
-                Request re-check (rejected steps)
+                Resubmission Message
               </label>
               <textarea
                 id="recheck-msg"
                 className="mt-1 w-full rounded border border-slate-200 p-2 text-sm"
-                rows={2}
+                rows={3}
                 value={recheckMessage}
                 onChange={(e) => setRecheckMessage(e.target.value)}
-                placeholder="Describe what you fixed…"
+                placeholder="Describe what you have fixed or submitted (e.g., 'I have submitted my room key to the dormitory office')..."
                 disabled={!rejectedStep}
               />
               <button
                 type="button"
-                className="mt-2 rounded bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!rejectedStep || !recheckMessage.trim()}
                 onClick={onSubmitRecheck}
               >
-                Request re-check
+                📤 Submit Resubmission
               </button>
+              {rejectedStep && (
+                <p className="mt-1 text-xs text-slate-500">
+                  💡 Click the "🔄 Resubmit" button above any rejected step to
+                  auto-fill this message
+                </p>
+              )}
             </div>
             <div>
               <button
                 type="button"
                 className={`rounded px-4 py-2 text-sm font-semibold text-white ${
-                  canCert ? "bg-emerald-600" : "cursor-not-allowed bg-slate-400"
+                  canCert
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "cursor-not-allowed bg-slate-400"
                 }`}
                 disabled={!canCert}
                 onClick={onDownloadCertificatePdf}
               >
-                Download certificate (PDF)
+                📜 Download certificate (PDF)
               </button>
             </div>
           </div>

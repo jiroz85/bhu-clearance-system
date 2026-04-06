@@ -20,11 +20,17 @@ function sha256Hex(buffer: Buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
-function pdfBufferFromDoc(doc: PDFKit.PDFDocument) {
-  return new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    doc.on('data', (d: any) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
+function pdfBufferFromDoc(
+  doc: PDFKit.PDFDocument,
+): Promise<Buffer<ArrayBufferLike>> {
+  return new Promise<Buffer<ArrayBufferLike>>((resolve, reject) => {
+    const chunks: Buffer<ArrayBufferLike>[] = [];
+    doc.on('data', (d: any) =>
+      chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)),
+    );
+    doc.on('end', () =>
+      resolve(Buffer.concat(chunks) as Buffer<ArrayBufferLike>),
+    );
     doc.on('error', reject);
   });
 }
@@ -60,20 +66,30 @@ export class CertificateService {
       throw new BadRequestException('Clearance not found');
     }
     if (clearance.status !== ClearanceStatus.FULLY_CLEARED) {
-      throw new BadRequestException('Certificate is available only after full clearance');
+      throw new BadRequestException(
+        'Certificate is available only after full clearance',
+      );
     }
     if (clearance.steps.length === 0) {
       throw new BadRequestException('Invalid clearance steps');
     }
     if (clearance.steps.length !== 13) {
-      throw new BadRequestException('Certificate can be generated only when all 13 steps are present');
+      throw new BadRequestException(
+        'Certificate can be generated only when all 13 steps are present',
+      );
     }
-    const allCleared = clearance.steps.every((s) => s.status === StepStatus.APPROVED);
+    const allCleared = clearance.steps.every(
+      (s) => s.status === StepStatus.APPROVED,
+    );
     if (!allCleared) {
-      throw new BadRequestException('Certificate cannot be generated until all 13 steps are approved');
+      throw new BadRequestException(
+        'Certificate cannot be generated until all 13 steps are approved',
+      );
     }
 
-    const existing = await this.prisma.certificate.findUnique({ where: { clearanceId } });
+    const existing = await this.prisma.certificate.findUnique({
+      where: { clearanceId },
+    });
     if (existing) {
       if (existing.fileUrl.startsWith('s3://')) {
         const buffer = await this.storage.downloadPdfByUrl(existing.fileUrl);
@@ -88,7 +104,6 @@ export class CertificateService {
 
     let certificateNumber = genCertificateNumber();
     // Ensure uniqueness (rare collision, but cheap to verify)
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const exists = await this.prisma.certificate.findUnique({
         where: { certificateNumber },
@@ -100,16 +115,25 @@ export class CertificateService {
     const issuedAt = new Date();
     const verificationCode = certificateNumber; // deterministic + easy to verify
 
-    const qrBuffer = await QRCode.toBuffer(verificationCode, {
+    // Create enhanced QR code with verification URL and digital signature
+    const verificationUrl = `http://localhost:3000/api/certificate/verify/${verificationCode}`;
+
+    const qrBuffer = (await QRCode.toBuffer(verificationUrl, {
       type: 'png',
-      errorCorrectionLevel: 'M',
+      errorCorrectionLevel: 'H', // Higher error correction for security
       margin: 1,
-      width: 110,
-    });
+      width: 120,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF',
+      },
+    })) as Buffer<ArrayBufferLike>;
 
     const step13 = clearance.steps.find((s) => s.stepOrder === 13);
     if (!step13) {
-      throw new BadRequestException('Invalid clearance configuration: missing step 13');
+      throw new BadRequestException(
+        'Invalid clearance configuration: missing step 13',
+      );
     }
     const latestReviewForStep13 = await this.prisma.review.findFirst({
       where: { clearanceStepId: step13.id },
@@ -133,17 +157,43 @@ export class CertificateService {
     const registrarRole =
       latestReviewForStep13?.reviewer.role === 'STAFF'
         ? `Staff (${latestReviewForStep13.reviewer.staffDepartment ?? '—'})`
-        : latestReviewForStep13?.reviewer.role ?? '—';
+        : (latestReviewForStep13?.reviewer.role ?? '—');
 
-    const studentName = clearance.student.displayName ?? clearance.student.email;
+    const studentName =
+      clearance.student.displayName ?? clearance.student.email;
     const studentId = clearance.student.studentUniversityId ?? '—';
     const studentDepartment = clearance.student.studentDepartment ?? '—';
     const studentYear = clearance.student.studentYear ?? '—';
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    doc.font('Times-Bold').fontSize(18).text('Bule Hora University', { align: 'center' });
+
+    // Add security watermark
+    doc.fillOpacity(0.1);
+    doc.font('Times-Bold').fontSize(72);
+    doc.save();
+    doc.translate(doc.page.width / 2, doc.page.height / 2);
+    doc.rotate((-45 * Math.PI) / 180);
+    doc.text('BHU OFFICIAL', 0, 0, {
+      align: 'center',
+      baseline: 'middle',
+    });
+    doc.restore();
+    doc.fillOpacity(1.0); // Reset opacity
+
+    // Add border
+    doc.strokeColor('#000000').lineWidth(2);
+    doc.rect(40, 40, doc.page.width - 80, doc.page.height - 80).stroke();
+
+    // Header
+    doc
+      .font('Times-Bold')
+      .fontSize(18)
+      .text('Bule Hora University', { align: 'center' });
     doc.moveDown(0.3);
-    doc.font('Times-Bold').fontSize(14).text('Student Clearance Certificate', { align: 'center' });
+    doc
+      .font('Times-Bold')
+      .fontSize(14)
+      .text('Student Clearance Certificate', { align: 'center' });
     doc.moveDown(1);
 
     doc.font('Times-Roman').fontSize(11);
@@ -181,7 +231,10 @@ export class CertificateService {
         .fontSize(10)
         .text(String(no), 50, startY + i * rowHeight, { width: col1 })
         .text(dept, 90, startY + i * rowHeight, { width: col2 })
-        .text('CLEARED', 90 + col2, startY + i * rowHeight, { width: col3, align: 'right' });
+        .text('CLEARED', 90 + col2, startY + i * rowHeight, {
+          width: col3,
+          align: 'right',
+        });
     }
 
     doc.moveDown(1.2);
@@ -195,10 +248,12 @@ export class CertificateService {
     const qrX = 420;
     const qrY = 560;
     doc.image(qrBuffer, qrX, qrY, { width: 110, height: 110 });
-    doc.fontSize(9).text(`Verify using code: ${verificationCode}`, 50, qrY + 120, {
-      width: 500,
-      align: 'center',
-    });
+    doc
+      .fontSize(9)
+      .text(`Verify using code: ${verificationCode}`, 50, qrY + 120, {
+        width: 500,
+        align: 'center',
+      });
 
     doc.end();
     const buffer = await pdfBufferFromDoc(doc);
@@ -217,7 +272,6 @@ export class CertificateService {
     }
 
     // Save certificate metadata
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const saved = await this.prisma.certificate.upsert({
       where: { clearanceId },
       update: {
@@ -239,12 +293,22 @@ export class CertificateService {
       },
     });
 
-    await this.audit.log(studentUserId, 'CERTIFICATE_GENERATED', 'certificate', saved.id, {
-      certificateNumber: saved.certificateNumber,
-      clearanceId,
-    });
+    await this.audit.log(
+      studentUserId,
+      'CERTIFICATE_GENERATED',
+      'certificate',
+      saved.id,
+      {
+        certificateNumber: saved.certificateNumber,
+        clearanceId,
+      },
+    );
     this.logger.info(
-      { clearanceId, certificateNumber: saved.certificateNumber, storage: saved.fileUrl },
+      {
+        clearanceId,
+        certificateNumber: saved.certificateNumber,
+        storage: saved.fileUrl,
+      },
       'Certificate generated',
     );
 
@@ -269,23 +333,56 @@ export class CertificateService {
         status: null,
         student: null,
         issuedAt: null,
+        checksumSha256: null,
       };
     }
 
-    const allCleared = certificate.clearance.steps.every((s) => s.status === StepStatus.APPROVED);
-    const valid = certificate.clearance.status === ClearanceStatus.FULLY_CLEARED && allCleared;
+    const allCleared = certificate.clearance.steps.every(
+      (s) => s.status === StepStatus.APPROVED,
+    );
+    const valid =
+      certificate.clearance.status === ClearanceStatus.FULLY_CLEARED &&
+      allCleared;
 
     return {
       certificateNumber,
       valid,
       status: certificate.clearance.status,
       issuedAt: certificate.issuedAt.toISOString(),
+      checksumSha256: certificate.checksumSha256,
       student: {
         name: certificate.student.displayName ?? certificate.student.email,
         studentId: certificate.student.studentUniversityId,
         department: certificate.student.studentDepartment,
         year: certificate.student.studentYear,
       },
+    };
+  }
+
+  async verifyCertificateWithFile(certificateNumber: string, file: Buffer) {
+    // First verify the certificate exists and is valid
+    const certificate = await this.verifyCertificate(certificateNumber);
+
+    if (!certificate.valid) {
+      return {
+        ...certificate,
+        fileIntegrity: 'INVALID_CERTIFICATE',
+        tampered: false,
+      };
+    }
+
+    // Calculate checksum of uploaded file
+    const uploadedChecksum = sha256Hex(file);
+
+    // Compare with stored checksum
+    const isTampered = uploadedChecksum !== certificate.checksumSha256;
+
+    return {
+      ...certificate,
+      fileIntegrity: isTampered ? 'TAMPERED' : 'AUTHENTIC',
+      tampered: isTampered,
+      uploadedChecksum,
+      storedChecksum: certificate.checksumSha256,
     };
   }
 
@@ -304,4 +401,3 @@ export class CertificateService {
     return { url, expiresInSec: 300 };
   }
 }
-

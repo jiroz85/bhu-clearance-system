@@ -2,10 +2,12 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getDepartmentConfig } from './department.config';
 import { ClearanceService } from '../clearance/clearance.service';
+import { ReviewDecision } from '../../generated/prisma/enums';
 
 @Injectable()
 export class DepartmentService {
@@ -46,9 +48,10 @@ export class DepartmentService {
         throw new NotFoundException(`Department ${departmentName} not found`);
       }
 
-      console.log(`Getting queue for department: ${departmentName}`);
+      console.log(`Getting queue for department: ${departmentName}`, filters);
 
       // Get clearances where this department is the CURRENT active step
+      // Include both SUBMITTED and PAUSED_REJECTED clearances to handle resubmissions
       const clearances = await this.prisma.clearance.findMany({
         where: {
           status: { in: ['SUBMITTED', 'PAUSED_REJECTED'] },
@@ -56,6 +59,7 @@ export class DepartmentService {
           steps: {
             some: {
               department: departmentName,
+              // Show PENDING steps by default, but allow filtering by other statuses
               status: filters?.status || 'PENDING',
             },
           },
@@ -76,6 +80,9 @@ export class DepartmentService {
             },
             include: {
               reviews: {
+                orderBy: {
+                  createdAt: 'desc',
+                },
                 include: {
                   reviewer: {
                     select: {
@@ -134,8 +141,15 @@ export class DepartmentService {
             return null;
           }
 
+          // Check if this step was resubmitted (has recent resubmission review)
+          const isResubmitted = step.reviews.some(
+            (review) =>
+              review.reviewerUserId === clearance.studentUserId &&
+              review.comment?.startsWith('Resubmitted:'),
+          );
+
           console.log(
-            `Including current active step ${step.stepOrder} for clearance ${clearance.referenceId}`,
+            `Including current active step ${step.stepOrder} for clearance ${clearance.referenceId} (Status: ${step.status}, Resubmitted: ${isResubmitted})`,
           );
           return {
             id: clearance.id,
@@ -149,6 +163,7 @@ export class DepartmentService {
               comment: step.comment,
               reviewedAt: step.reviewedAt,
               reviews: step.reviews,
+              isResubmitted, // Add flag to indicate resubmission
             },
             submittedAt: clearance.submittedAt,
             status: clearance.status,
@@ -396,5 +411,83 @@ export class DepartmentService {
         instruction: instruction || 'Please resolve the issue and resubmit',
       },
     );
+  }
+
+  async resubmitStep(
+    stepId: string,
+    studentUserId: string,
+    comment: string,
+    departmentData?: Record<string, any>, // Department-specific data for resubmission
+  ) {
+    // Log department data if provided (for future use)
+    if (departmentData) {
+      console.log('Department data provided for resubmission:', departmentData);
+    }
+
+    // Find the step and verify ownership
+    const step = await this.prisma.clearanceStep.findUnique({
+      where: { id: stepId },
+      include: {
+        clearance: {
+          include: { student: true },
+        },
+      },
+    });
+
+    if (!step) {
+      throw new NotFoundException('Step not found');
+    }
+
+    // Verify this step belongs to the student
+    if (step.clearance.studentUserId !== studentUserId) {
+      throw new ForbiddenException(
+        'You can only resubmit your own clearance steps',
+      );
+    }
+
+    // Verify the step was rejected
+    if (step.status !== 'REJECTED') {
+      throw new BadRequestException('Only rejected steps can be resubmitted');
+    }
+
+    // Reset the step to PENDING
+    const updatedStep = await this.prisma.$transaction(async (tx) => {
+      // Reset step to PENDING
+      const resetStep = await tx.clearanceStep.update({
+        where: { id: stepId },
+        data: {
+          status: 'PENDING',
+          comment: `Resubmitted: ${comment}`,
+          reviewedAt: null, // Clear previous review timestamp
+        },
+      });
+
+      // Update clearance status back to SUBMITTED
+      await tx.clearance.update({
+        where: { id: step.clearanceId },
+        data: {
+          status: 'SUBMITTED',
+          currentStepOrder: step.stepOrder, // Keep current step as it's now pending again
+        },
+      });
+
+      // Create a resubmission record for tracking
+      await tx.review.create({
+        data: {
+          clearanceStepId: stepId,
+          reviewerUserId: studentUserId, // Student is the "reviewer" for resubmission
+          decision: ReviewDecision.APPROVED, // Using APPROVED to indicate resubmission (positive action)
+          comment: `Resubmitted: ${comment}`,
+        },
+      });
+
+      return resetStep;
+    });
+
+    return {
+      success: true,
+      message: 'Step resubmitted successfully',
+      step: updatedStep,
+    };
   }
 }

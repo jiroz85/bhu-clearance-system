@@ -40,6 +40,11 @@ export class StudentClearanceController {
     @Param('id') id: string,
     @Body() dto: RecheckDto,
   ) {
-    return this.clearance.requestRecheck(user.userId, id, dto.stepOrder, dto.message);
+    return this.clearance.requestRecheck(
+      user.userId,
+      id,
+      dto.stepId,
+      dto.message,
+    );
   }
 }

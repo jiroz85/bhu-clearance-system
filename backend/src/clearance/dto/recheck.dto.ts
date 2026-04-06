@@ -1,11 +1,9 @@
-import { IsInt, IsString, Min, MinLength } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsUUID, MinLength } from 'class-validator';
 
 export class RecheckDto {
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  stepOrder: number;
+  @IsString()
+  @IsUUID()
+  stepId: string;
 
   @IsString()
   @MinLength(3)

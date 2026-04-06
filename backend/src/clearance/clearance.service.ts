@@ -245,6 +245,7 @@ export class ClearanceService {
             currentStepOrder: clearance.currentStepOrder,
             submittedAt: clearance.submittedAt,
             steps: clearance.steps.map((s) => ({
+              id: s.id,
               stepOrder: s.stepOrder,
               department: s.department,
               status: s.status,
@@ -402,6 +403,15 @@ export class ClearanceService {
         },
       });
     }
+
+    this.logger.info(
+      {
+        staffUserId,
+        staffDepartment,
+        requestsFound: rows.length,
+      },
+      'Staff pending requests retrieved',
+    );
 
     return rows;
   }
@@ -928,7 +938,7 @@ export class ClearanceService {
   async requestRecheck(
     studentUserId: string,
     clearanceId: string,
-    stepOrder: number,
+    stepId: string,
     message: string,
   ) {
     const universityId = await this.getUserUniversityId(studentUserId);
@@ -943,9 +953,16 @@ export class ClearanceService {
     if (!clearance) {
       throw new NotFoundException('Clearance not found');
     }
-    const step = clearance.steps.find((s) => s.stepOrder === stepOrder);
+    const step = clearance.steps.find((s) => s.id === stepId);
     if (!step || step.status !== StepStatus.REJECTED) {
       throw new BadRequestException('Re-check is only for rejected steps');
+    }
+
+    // Verify this step is actually the current step
+    if (clearance.currentStepOrder !== step.stepOrder) {
+      throw new BadRequestException(
+        'You can only request recheck for the current rejected step',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -953,7 +970,7 @@ export class ClearanceService {
         where: { id: step.id, status: StepStatus.REJECTED },
         data: {
           status: StepStatus.PENDING,
-          comment: null,
+          comment: `Resubmitted: ${message}`,
           reviewedAt: null,
         },
       });
@@ -967,7 +984,17 @@ export class ClearanceService {
         where: { id: clearanceId, status: ClearanceStatus.PAUSED_REJECTED },
         data: {
           status: ClearanceStatus.SUBMITTED,
-          currentStepOrder: stepOrder,
+          currentStepOrder: step.stepOrder,
+        },
+      });
+
+      // Create a resubmission record for tracking
+      await tx.review.create({
+        data: {
+          clearanceStepId: step.id,
+          reviewerUserId: studentUserId, // Student is the "reviewer" for resubmission
+          decision: ReviewDecision.APPROVED, // Using APPROVED to indicate resubmission (positive action)
+          comment: `Resubmitted: ${message}`,
         },
       });
     });
@@ -1006,9 +1033,21 @@ export class ClearanceService {
       'clearance',
       clearanceId,
       {
-        stepOrder,
+        stepOrder: step.stepOrder,
+        message,
+        department: step.department,
+      },
+    );
+
+    this.logger.info(
+      {
+        studentUserId,
+        clearanceId,
+        stepOrder: step.stepOrder,
+        department: step.department,
         message,
       },
+      'Student requested recheck',
     );
 
     return this.getStudentDashboard(studentUserId);

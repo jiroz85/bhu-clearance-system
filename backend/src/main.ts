@@ -43,22 +43,36 @@ async function bootstrap() {
   });
 
   // Login/register protection against brute-force
+  // More lenient for development, stricter for production
+  const isDevelopment = process.env.NODE_ENV !== 'production';
   app.use(
     '/api/auth/login',
     rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 10,
+      windowMs: isDevelopment ? 1 * 60 * 1000 : 15 * 60 * 1000, // 1 min dev, 15 min prod
+      max: isDevelopment ? 100 : 10, // 100 requests dev, 10 requests prod
       standardHeaders: true,
       legacyHeaders: false,
+      message: {
+        error: 'Too many login attempts',
+        message: isDevelopment
+          ? 'Rate limit exceeded in development mode. Try again in 1 minute.'
+          : 'Rate limit exceeded. Try again in 15 minutes.',
+      },
     }),
   );
   app.use(
     '/api/auth/register',
     rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 10,
+      windowMs: isDevelopment ? 5 * 60 * 1000 : 15 * 60 * 1000, // 5 min dev, 15 min prod
+      max: isDevelopment ? 20 : 10, // 20 requests dev, 10 requests prod
       standardHeaders: true,
       legacyHeaders: false,
+      message: {
+        error: 'Too many registration attempts',
+        message: isDevelopment
+          ? 'Rate limit exceeded in development mode. Try again in 5 minutes.'
+          : 'Rate limit exceeded. Try again in 15 minutes.',
+      },
     }),
   );
 

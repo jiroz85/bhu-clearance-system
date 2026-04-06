@@ -136,6 +136,25 @@ export class DepartmentController {
     );
   }
 
+  @Post(':departmentName/steps/:stepId/resubmit')
+  async resubmitStep(
+    @Request() req: AuthenticatedRequest,
+    @Param('departmentName') departmentName: string,
+    @Param('stepId') stepId: string,
+    @Body()
+    body: {
+      comment: string;
+      departmentData?: Record<string, any>;
+    },
+  ) {
+    return await this.departmentService.resubmitStep(
+      stepId,
+      req.user.userId,
+      body.comment,
+      body.departmentData,
+    );
+  }
+
   @Get(':departmentName/config')
   getDepartmentConfig(@Param('departmentName') departmentName: string) {
     const config = getDepartmentConfig(departmentName);
