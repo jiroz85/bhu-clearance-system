@@ -53,6 +53,9 @@ export class BaseUserValidationDto {
 
   @ValidateIf((o: BaseUserValidationDto) => o.role === Role.STUDENT)
   @IsString()
+  @IsNotEmpty({
+    message: 'Student university ID is required for student users',
+  })
   @MinLength(3, {
     message: 'Student university ID must be at least 3 characters long',
   })
@@ -63,6 +66,7 @@ export class BaseUserValidationDto {
 
   @ValidateIf((o: BaseUserValidationDto) => o.role === Role.STUDENT)
   @IsString()
+  @IsNotEmpty({ message: 'Student department is required for student users' })
   @MaxLength(100, {
     message: 'Student department cannot exceed 100 characters',
   })
@@ -70,6 +74,7 @@ export class BaseUserValidationDto {
 
   @ValidateIf((o: BaseUserValidationDto) => o.role === Role.STUDENT)
   @IsString()
+  @IsNotEmpty({ message: 'Student year is required for student users' })
   @MaxLength(50, { message: 'Student year cannot exceed 50 characters' })
   studentYear?: string;
 

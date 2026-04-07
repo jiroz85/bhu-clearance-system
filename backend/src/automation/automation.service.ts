@@ -13,7 +13,7 @@ export interface SLASettings {
 @Injectable()
 export class AutomationService {
   private readonly logger = new Logger(AutomationService.name);
-  
+
   private readonly slaSettings: SLASettings = {
     reminderHours: 24, // Send reminder after 24 hours
     overdueHours: 72, // Mark as overdue after 72 hours
@@ -29,7 +29,7 @@ export class AutomationService {
   @Cron(CronExpression.EVERY_HOUR) // Check every hour
   async processPendingClearances(): Promise<void> {
     this.logger.log('Processing pending clearances for automation...');
-    
+
     const pendingSteps = await this.prisma.clearanceStep.findMany({
       where: {
         status: 'PENDING',
@@ -54,15 +54,22 @@ export class AutomationService {
 
   private async processStepForAutomation(step: any): Promise<void> {
     const now = new Date();
-    const hoursPending = (now.getTime() - step.createdAt.getTime()) / (1000 * 60 * 60);
+    const hoursPending =
+      (now.getTime() - step.createdAt.getTime()) / (1000 * 60 * 60);
 
     // Check if reminder is needed
-    if (hoursPending >= this.slaSettings.reminderHours && hoursPending < this.slaSettings.overdueHours) {
+    if (
+      hoursPending >= this.slaSettings.reminderHours &&
+      hoursPending < this.slaSettings.overdueHours
+    ) {
       await this.sendReminder(step);
     }
 
     // Check if step is overdue
-    if (hoursPending >= this.slaSettings.overdueHours && hoursPending < this.slaSettings.escalationHours) {
+    if (
+      hoursPending >= this.slaSettings.overdueHours &&
+      hoursPending < this.slaSettings.escalationHours
+    ) {
       await this.markOverdue(step);
     }
 
@@ -103,8 +110,11 @@ export class AutomationService {
         {
           referenceId: step.clearance.referenceId,
           department: step.department,
-          pendingHours: Math.floor((Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60)),
+          pendingHours: Math.floor(
+            (Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60),
+          ),
         },
+        step.clearanceId,
       );
     }
 
@@ -141,8 +151,11 @@ export class AutomationService {
         {
           referenceId: step.clearance.referenceId,
           department: step.department,
-          pendingHours: Math.floor((Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60)),
+          pendingHours: Math.floor(
+            (Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60),
+          ),
         },
+        step.clearanceId,
       );
     }
 
@@ -178,9 +191,12 @@ export class AutomationService {
         {
           referenceId: step.clearance.referenceId,
           department: step.department,
-          pendingHours: Math.floor((Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60)),
+          pendingHours: Math.floor(
+            (Date.now() - step.createdAt.getTime()) / (1000 * 60 * 60),
+          ),
           studentName: step.clearance.student.displayName,
         },
+        step.clearanceId,
       );
     }
 
@@ -210,49 +226,60 @@ export class AutomationService {
 
     const now = new Date();
     const overdueThreshold = this.slaSettings.overdueHours * 60 * 60 * 1000;
-    const escalationThreshold = this.slaSettings.escalationHours * 60 * 60 * 1000;
+    const escalationThreshold =
+      this.slaSettings.escalationHours * 60 * 60 * 1000;
 
-    const overdueCount = pendingSteps.filter(step => 
-      now.getTime() - step.createdAt.getTime() >= overdueThreshold
+    const overdueCount = pendingSteps.filter(
+      (step) => now.getTime() - step.createdAt.getTime() >= overdueThreshold,
     ).length;
 
-    const escalatedCount = pendingSteps.filter(step => 
-      step.comment?.includes('[ESCALATED]')
+    const escalatedCount = pendingSteps.filter((step) =>
+      step.comment?.includes('[ESCALATED]'),
     ).length;
 
-    const averagePendingTime = pendingSteps.length > 0
-      ? pendingSteps.reduce((sum, step) => 
-          sum + (now.getTime() - step.createdAt.getTime()), 0
-        ) / pendingSteps.length / (1000 * 60 * 60)
-      : 0;
+    const averagePendingTime =
+      pendingSteps.length > 0
+        ? pendingSteps.reduce(
+            (sum, step) => sum + (now.getTime() - step.createdAt.getTime()),
+            0,
+          ) /
+          pendingSteps.length /
+          (1000 * 60 * 60)
+        : 0;
 
     // Group by department
-    const departmentStats = pendingSteps.reduce((acc, step) => {
-      if (!acc[step.department]) {
-        acc[step.department] = {
-          department: step.department,
-          pendingCount: 0,
-          overdueCount: 0,
-          totalTime: 0,
-        };
-      }
-      
-      acc[step.department].pendingCount++;
-      acc[step.department].totalTime += now.getTime() - step.createdAt.getTime();
-      
-      if (now.getTime() - step.createdAt.getTime() >= overdueThreshold) {
-        acc[step.department].overdueCount++;
-      }
-      
-      return acc;
-    }, {} as Record<string, any>);
+    const departmentStats = pendingSteps.reduce(
+      (acc, step) => {
+        if (!acc[step.department]) {
+          acc[step.department] = {
+            department: step.department,
+            pendingCount: 0,
+            overdueCount: 0,
+            totalTime: 0,
+          };
+        }
 
-    const departmentsWithIssues = Object.values(departmentStats).map((stat: any) => ({
-      department: stat.department,
-      pendingCount: stat.pendingCount,
-      overdueCount: stat.overdueCount,
-      averageTime: stat.totalTime / stat.pendingCount / (1000 * 60 * 60),
-    })).sort((a, b) => b.averageTime - a.averageTime);
+        acc[step.department].pendingCount++;
+        acc[step.department].totalTime +=
+          now.getTime() - step.createdAt.getTime();
+
+        if (now.getTime() - step.createdAt.getTime() >= overdueThreshold) {
+          acc[step.department].overdueCount++;
+        }
+
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+
+    const departmentsWithIssues = Object.values(departmentStats)
+      .map((stat: any) => ({
+        department: stat.department,
+        pendingCount: stat.pendingCount,
+        overdueCount: stat.overdueCount,
+        averageTime: stat.totalTime / stat.pendingCount / (1000 * 60 * 60),
+      }))
+      .sort((a, b) => b.averageTime - a.averageTime);
 
     return {
       totalPending: pendingSteps.length,
@@ -263,7 +290,9 @@ export class AutomationService {
     };
   }
 
-  async updateSLASettings(settings: Partial<SLASettings>): Promise<SLASettings> {
+  async updateSLASettings(
+    settings: Partial<SLASettings>,
+  ): Promise<SLASettings> {
     Object.assign(this.slaSettings, settings);
     this.logger.log('Updated SLA settings:', this.slaSettings);
     return this.slaSettings;

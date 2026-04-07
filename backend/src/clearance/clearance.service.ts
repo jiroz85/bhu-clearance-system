@@ -190,6 +190,7 @@ export class ClearanceService {
       firstDept,
       'New clearance pending',
       `Reference ${clearance.referenceId} is waiting at ${firstDept}.`,
+      clearance.id,
     );
 
     return this.getStudentDashboard(studentUserId);
@@ -610,6 +611,7 @@ export class ClearanceService {
         undefined,
         'CLEARANCE_STEP_APPROVED',
         { referenceId },
+        clearanceId,
       );
       if (refreshed?.status === ClearanceStatus.FULLY_CLEARED) {
         await this.notifications.create(
@@ -619,6 +621,7 @@ export class ClearanceService {
           undefined,
           'CLEARANCE_COMPLETE',
           { referenceId },
+          clearanceId,
         );
       } else {
         const next = refreshed?.steps.find(
@@ -629,6 +632,7 @@ export class ClearanceService {
             next.department,
             'New clearance pending',
             `Student clearance ${referenceId} is waiting at ${next.department}.`,
+            refreshed?.id,
           );
         }
       }
@@ -644,6 +648,7 @@ export class ClearanceService {
           reason: payload.reason,
           instruction: payload.instruction,
         },
+        clearanceId,
       );
     }
 
@@ -884,12 +889,17 @@ export class ClearanceService {
           undefined,
           'CLEARANCE_COMPLETE',
           { referenceId },
+          clearanceId,
         );
       } else {
         await this.notifications.create(
           studentUserId,
           'Step approved (admin override)',
           `${stepDepartment} was approved by admin override (ref ${referenceId}).`,
+          undefined,
+          undefined,
+          undefined,
+          clearanceId,
         );
         const next = refreshed?.steps.find(
           (s) => s.stepOrder === dto.stepOrder + 1,
@@ -899,6 +909,7 @@ export class ClearanceService {
             next.department,
             'New clearance pending',
             `Student clearance ${referenceId} is waiting at ${next.department}.`,
+            refreshed?.id,
           );
         }
       }
@@ -907,6 +918,10 @@ export class ClearanceService {
         studentUserId,
         'Clearance step rejected (admin override)',
         `${stepDepartment} rejected your clearance by admin override. Reason: ${reason}`,
+        undefined,
+        undefined,
+        undefined,
+        clearanceId,
       );
     }
 
@@ -1004,6 +1019,7 @@ export class ClearanceService {
       step.department,
       'Re-check requested',
       `Student requested re-evaluation: ${message} (ref ${clearance.referenceId}).`,
+      clearanceId,
     );
 
     // Send email notification to department staff
@@ -1024,6 +1040,7 @@ export class ClearanceService {
         undefined,
         'RECHECK_REQUESTED',
         { referenceId: clearance.referenceId, department: step.department },
+        clearanceId,
       );
     }
 
@@ -1057,6 +1074,7 @@ export class ClearanceService {
     department: string,
     title: string,
     body: string,
+    clearanceId?: string,
   ) {
     const target = normalizeDepartment(department);
     const staff = await this.prisma.user.findMany({
@@ -1067,7 +1085,15 @@ export class ClearanceService {
         u.staffDepartment &&
         normalizeDepartment(u.staffDepartment) === target
       ) {
-        await this.notifications.create(u.id, title, body);
+        await this.notifications.create(
+          u.id,
+          title,
+          body,
+          undefined,
+          undefined,
+          undefined,
+          clearanceId,
+        );
       }
     }
   }

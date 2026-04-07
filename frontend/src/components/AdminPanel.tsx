@@ -256,7 +256,12 @@ export function AdminPanel(props: {
 
   const handleCreateUser = async () => {
     try {
+      console.log(
+        "DEBUG: Sending form data:",
+        JSON.stringify(formData, null, 2),
+      );
       await api.post("/admin/users", formData);
+      console.log("DEBUG: User creation successful");
       setShowCreateForm(false);
       setFormData({
         email: "",
@@ -270,6 +275,7 @@ export function AdminPanel(props: {
       });
       loadUsers();
     } catch (error: unknown) {
+      console.error("DEBUG: User creation failed:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create user";
       setUsersError(errorMessage);
@@ -736,27 +742,30 @@ export function AdminPanel(props: {
             <div className="mt-4 space-y-3">
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="Email *"
                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                 value={formData.email}
+                required
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
               />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder="Password *"
                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                 value={formData.password}
+                required
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
               />
               <input
                 type="text"
-                placeholder="Display Name"
+                placeholder="Display Name *"
                 className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                 value={formData.displayName}
+                required
                 onChange={(e) =>
                   setFormData({ ...formData, displayName: e.target.value })
                 }
@@ -777,9 +786,10 @@ export function AdminPanel(props: {
               {formData.role === "STAFF" && (
                 <input
                   type="text"
-                  placeholder="Staff Department"
+                  placeholder="Staff Department *"
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                   value={formData.staffDepartment}
+                  required
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -792,9 +802,10 @@ export function AdminPanel(props: {
                 <>
                   <input
                     type="text"
-                    placeholder="Student University ID"
+                    placeholder="Student University ID *"
                     className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                     value={formData.studentUniversityId}
+                    required
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -804,9 +815,10 @@ export function AdminPanel(props: {
                   />
                   <input
                     type="text"
-                    placeholder="Student Department"
+                    placeholder="Student Department *"
                     className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                     value={formData.studentDepartment}
+                    required
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -816,9 +828,10 @@ export function AdminPanel(props: {
                   />
                   <input
                     type="text"
-                    placeholder="Student Year"
+                    placeholder="Student Year *"
                     className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                     value={formData.studentYear}
+                    required
                     onChange={(e) =>
                       setFormData({ ...formData, studentYear: e.target.value })
                     }

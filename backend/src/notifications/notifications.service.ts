@@ -18,6 +18,7 @@ export class NotificationsService {
     universityId?: string,
     type?: NotificationData['type'],
     data?: Record<string, any>,
+    clearanceId?: string,
   ) {
     let uniId = universityId;
     if (!uniId) {
@@ -33,7 +34,7 @@ export class NotificationsService {
 
     // Create in-app notification
     const notification = await this.prisma.notification.create({
-      data: { userId, universityId: uniId, title, body },
+      data: { userId, universityId: uniId, title, body, clearanceId },
     });
 
     // Send email notification if type is provided
@@ -59,10 +60,21 @@ export class NotificationsService {
   }
 
   async listForUser(userId: string, take = 50) {
-    return this.prisma.notification.findMany({
+    const notifications = await this.prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take,
+      include: { clearance: { select: { status: true } } },
+    });
+
+    // Filter out notifications for completed clearances (show only real pending)
+    return notifications.filter((n) => {
+      // If no clearance attached, keep the notification (system notification)
+      if (!n.clearanceId) return true;
+      // If clearance is fully cleared, filter out (stale notification)
+      if (n.clearance?.status === 'FULLY_CLEARED') return false;
+      // Keep all other notifications
+      return true;
     });
   }
 

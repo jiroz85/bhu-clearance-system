@@ -37,11 +37,22 @@ export class AdminController {
   ) {}
 
   @Post('users')
-  createUser(
+  async createUser(
     @CurrentUser('userId') actorId: string,
     @Body() dto: AdminCreateUserDto,
   ) {
-    return this.admin.createUser(dto, actorId);
+    console.log(
+      'DEBUG: Create user DTO received:',
+      JSON.stringify(dto, null, 2),
+    );
+    try {
+      const result = await this.admin.createUser(dto, actorId);
+      console.log('DEBUG: User created successfully:', result.id);
+      return result;
+    } catch (error) {
+      console.error('DEBUG: Error creating user:', error);
+      throw error;
+    }
   }
 
   @Get('clearances')

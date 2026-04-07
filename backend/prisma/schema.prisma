@@ -109,6 +109,7 @@ model Clearance {
   student User            @relation("StudentClearances", fields: [studentUserId], references: [id], onDelete: Cascade)
   steps   ClearanceStep[]
   certificate Certificate?
+  notifications Notification[]
   university  University  @relation(fields: [universityId], references: [id], onDelete: Restrict)
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -261,6 +262,7 @@ model Notification {
   id        String   @id @default(uuid()) @db.Uuid
   universityId String @map("university_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
+  clearanceId String? @map("clearance_id") @db.Uuid
   title     String   @db.VarChar(200)
   body      String   @db.Text
   read      Boolean  @default(false)
@@ -268,10 +270,12 @@ model Notification {
 
   user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   university University         @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  clearance  Clearance?         @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
   queueItems NotificationQueue[]
 
   @@index([universityId])
   @@index([userId, read])
+  @@index([clearanceId])
   @@map("notifications")
 }
 
