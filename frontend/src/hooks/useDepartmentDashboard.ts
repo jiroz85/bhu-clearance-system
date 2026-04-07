@@ -84,7 +84,7 @@ export function useDepartmentDashboard(
         api.get(`/departments/${departmentName}/config`).catch(() => null),
         api.get(`/departments/${departmentName}/queue`).catch(() => null),
         api
-          .get(`/departments/${departmentName}/metrics?timeframe=week`)
+          .get(`/departments/${departmentName}/metrics?timeframe=all`)
           .catch(() => null),
         api.get("/notifications").catch(() => null),
       ]);
@@ -94,6 +94,10 @@ export function useDepartmentDashboard(
       const queueData = queueRes?.data?.data || queueRes?.data;
       const metricsData = metricsRes?.data?.data || metricsRes?.data;
       const notifsData = notifsRes?.data?.data || notifsRes?.data;
+
+      // Debug: Log what we received
+      console.log("DEBUG: Raw metrics response:", metricsRes);
+      console.log("DEBUG: Parsed metrics data:", metricsData);
 
       if (configData) setConfig(configData);
       if (queueData) setPendingRows(Array.isArray(queueData) ? queueData : []);

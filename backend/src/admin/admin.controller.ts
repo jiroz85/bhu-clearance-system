@@ -18,6 +18,7 @@ import { Role } from '../../generated/prisma/enums';
 import { AuditService } from '../audit/audit.service';
 import { ClearanceService } from '../clearance/clearance.service';
 import { AdminService } from './admin.service';
+import { ReportingService } from '../reporting/reporting.service';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { AdminListUsersDto } from './dto/admin-list-users.dto';
@@ -32,6 +33,7 @@ export class AdminController {
     private readonly admin: AdminService,
     private readonly clearance: ClearanceService,
     private readonly auditService: AuditService,
+    private readonly reportingService: ReportingService,
   ) {}
 
   @Post('users')
@@ -50,8 +52,33 @@ export class AdminController {
   }
 
   @Get('reports/summary')
-  summary() {
-    return this.clearance.adminSummary();
+  async summary(@CurrentUser('universityId') universityId: string) {
+    const startTime = Date.now();
+
+    try {
+      const result =
+        await this.reportingService.getClearanceMetrics(universityId);
+      const endTime = Date.now();
+
+      // Log performance metrics
+      const processingTime = endTime - startTime;
+      console.log(
+        `Reports summary generated in ${processingTime}ms for university: ${universityId}`,
+      );
+
+      // Add performance metadata to response
+      return {
+        ...result,
+        _meta: {
+          generatedAt: new Date().toISOString(),
+          processingTimeMs: processingTime,
+          cacheExpiry: new Date(Date.now() + 120000).toISOString(), // 2 minutes
+        },
+      };
+    } catch (error) {
+      console.error('Error generating reports summary:', error);
+      throw error;
+    }
   }
 
   @Get('audit')

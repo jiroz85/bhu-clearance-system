@@ -183,10 +183,43 @@ export class DepartmentService {
 
   async getDepartmentMetrics(
     departmentName: string,
-    timeframe?: 'day' | 'week' | 'month',
+    timeframe?: 'day' | 'week' | 'month' | 'all',
   ) {
     try {
       console.log(`Getting real metrics for department: ${departmentName}`);
+
+      // First, let's debug: get ALL steps for this department without timeframe filter
+      const allSteps = await this.prisma.clearanceStep.findMany({
+        where: {
+          department: departmentName,
+        },
+        include: {
+          clearance: {
+            select: {
+              submittedAt: true,
+              studentUserId: true,
+              referenceId: true,
+              status: true,
+            },
+          },
+        },
+      });
+
+      console.log(
+        `DEBUG: Found ${allSteps.length} total steps for department ${departmentName}`,
+      );
+      if (allSteps.length > 0) {
+        console.log(
+          'DEBUG: Sample steps:',
+          allSteps.slice(0, 3).map((s) => ({
+            id: s.id,
+            department: s.department,
+            status: s.status,
+            clearanceSubmittedAt: s.clearance.submittedAt,
+            clearanceStatus: s.clearance.status,
+          })),
+        );
+      }
 
       // Calculate date filter based on timeframe
       const now = new Date();
@@ -202,9 +235,17 @@ export class DepartmentService {
         case 'month':
           startDate.setMonth(now.getMonth() - 1);
           break;
+        case 'all':
+          // No date filter - get all data
+          startDate.setFullYear(now.getFullYear() - 10); // 10 years ago
+          break;
         default:
           startDate.setDate(now.getDate() - 7);
       }
+
+      console.log(
+        `DEBUG: Using timeframe ${timeframe || 'week'}, startDate: ${startDate.toISOString()}`,
+      );
 
       // Get all steps for this department within the timeframe
       const steps = await this.prisma.clearanceStep.findMany({

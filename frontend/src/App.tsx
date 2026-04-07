@@ -467,7 +467,7 @@ function App() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl p-4 md:p-8">
+    <main className="mx-auto w-full max-w-6xl p-4 md:p-8">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">

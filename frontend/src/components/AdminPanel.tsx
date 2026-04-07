@@ -2,6 +2,40 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 
+type ReportsData = {
+  totalClearances: number;
+  fullyCleared: number;
+  inProgress: number;
+  pausedRejected: number;
+  draft: number;
+  cancelled: number;
+  completionRate: number;
+  averageProcessingTimeDays: number;
+  rejectionRateByDepartment: Array<{
+    department: string;
+    total: number;
+    rejected: number;
+    rejectionRate: number;
+  }>;
+  bottleneckDepartments: Array<{
+    department: string;
+    averageTimeDays: number;
+    pendingCount: number;
+    totalProcessed: number;
+  }>;
+  monthlyTrends: Array<{
+    month: string;
+    started: number;
+    completed: number;
+    averageTimeDays: number;
+  }>;
+  _meta?: {
+    generatedAt: string;
+    processingTimeMs: number;
+    cacheExpiry: string;
+  };
+};
+
 type User = {
   id: string;
   email: string;
@@ -126,9 +160,10 @@ export function AdminPanel(props: {
   } | null>(null);
 
   // Reports state
-  const [reportsData, setReportsData] = useState<unknown>(null);
+  const [reportsData, setReportsData] = useState<ReportsData | null>(null);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState<string | null>(null);
+  const [lastReportsFetch, setLastReportsFetch] = useState<number>(0);
   const [formData, setFormData] = useState<CreateUserDto>({
     email: "",
     password: "",
@@ -144,6 +179,7 @@ export function AdminPanel(props: {
     setUsersLoading(true);
     setUsersError(null);
     try {
+      const startTime = Date.now();
       const params = new URLSearchParams({
         skip: skip.toString(),
         take: take.toString(),
@@ -156,6 +192,8 @@ export function AdminPanel(props: {
       const { data } = await api.get<UsersResponse>(`/admin/users?${params}`);
       setUsers(data.data?.users || []);
       setUsersTotal(data.data?.total || 0);
+      const endTime = Date.now();
+      console.log(`Users loaded in ${endTime - startTime}ms`);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load users";
@@ -165,20 +203,48 @@ export function AdminPanel(props: {
     }
   }, [skip, take, search, roleFilter, statusFilter]);
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
+    // Cache for 2 minutes to reduce server load while keeping data fresh
+    const now = Date.now();
+    if (reportsData && now - lastReportsFetch < 120000) {
+      console.log("Using cached reports data");
+      return;
+    }
+
     setReportsLoading(true);
     setReportsError(null);
     try {
+      const startTime = Date.now();
+
+      // Add progress simulation for better UX
+      const progressTimeout = setTimeout(() => {
+        setReportsError(
+          "Loading comprehensive analytics... This may take a moment for large datasets.",
+        );
+      }, 3000);
+
       const { data } = await api.get("/admin/reports/summary");
-      setReportsData(data);
+      clearTimeout(progressTimeout);
+
+      const endTime = Date.now();
+      console.log(`Reports loaded in ${endTime - startTime}ms`);
+
+      // Handle wrapped response: { data: { ... } }
+      const reportsResponse = data.data || data;
+      setReportsData(reportsResponse);
+      setLastReportsFetch(now);
+
+      // Clear any progress message
+      setReportsError(null);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load reports";
       setReportsError(errorMessage);
+      console.error("Reports loading error:", error);
     } finally {
       setReportsLoading(false);
     }
-  };
+  }, [reportsData, lastReportsFetch]);
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -186,7 +252,7 @@ export function AdminPanel(props: {
     } else if (activeTab === "reports") {
       loadReports();
     }
-  }, [activeTab, loadUsers]);
+  }, [activeTab, loadUsers, loadReports]);
 
   const handleCreateUser = async () => {
     try {
@@ -314,7 +380,7 @@ export function AdminPanel(props: {
         failed: number;
         errors: string[];
       }>("/api/admin/users/bulk-import", {
-        users,
+        users: users as BulkImportUserDto[], // Explicit type cast
       });
       setBulkImportResult(data);
       setShowBulkImport(false);
@@ -472,6 +538,13 @@ export function AdminPanel(props: {
               <div className="flex gap-2">
                 <button
                   className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  onClick={() => loadUsers()}
+                  disabled={usersLoading}
+                >
+                  🔄 Refresh
+                </button>
+                <button
+                  className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   onClick={() => setShowBulkImport(true)}
                 >
                   Bulk Import
@@ -537,7 +610,10 @@ export function AdminPanel(props: {
           {/* Users List */}
           <div className="rounded-xl bg-white p-5 shadow-sm">
             {usersLoading && (
-              <p className="text-sm text-slate-600">Loading users...</p>
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-3 text-sm text-slate-600">Loading users...</p>
+              </div>
             )}
             {usersError && <p className="text-sm text-red-700">{usersError}</p>}
 
@@ -908,6 +984,16 @@ export function AdminPanel(props: {
                 <button
                   className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   onClick={() => {
+                    setLastReportsFetch(0); // Force refresh
+                    loadReports();
+                  }}
+                  disabled={reportsLoading}
+                >
+                  🔄 Refresh
+                </button>
+                <button
+                  className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
                     const params = new URLSearchParams();
                     if (search) params.append("startDate", search);
                     window.open(
@@ -931,10 +1017,64 @@ export function AdminPanel(props: {
               </div>
             </div>
             {reportsLoading && (
-              <p className="text-sm text-slate-600">Loading reports...</p>
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-3 text-sm text-slate-600">
+                  Loading comprehensive analytics...
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {reportsError?.includes("Loading")
+                    ? "Processing large dataset..."
+                    : "This may take a few seconds"}
+                </p>
+
+                {/* Skeleton loading indicators */}
+                <div className="mt-6 w-full max-w-2xl space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg bg-slate-100 p-4 animate-pulse"
+                      >
+                        <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-8 bg-slate-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-lg bg-slate-100 p-4 animate-pulse">
+                    <div className="h-4 bg-slate-200 rounded w-1/4 mb-3"></div>
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className="h-3 bg-slate-200 rounded"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
             {reportsError && (
               <p className="text-sm text-red-700">{reportsError}</p>
+            )}
+            {reportsData && !reportsLoading && (
+              <div className="mt-2 text-xs text-slate-500">
+                Last updated:{" "}
+                {lastReportsFetch > 0
+                  ? new Date(lastReportsFetch).toLocaleTimeString()
+                  : "Never"}
+                {reportsData?._meta && (
+                  <span className="ml-2">
+                    • Generated in {reportsData._meta.processingTimeMs}ms
+                    {reportsData._meta.cacheExpiry && (
+                      <span>
+                        • Cache expires:{" "}
+                        {new Date(
+                          reportsData._meta.cacheExpiry,
+                        ).toLocaleTimeString()}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
             )}
 
             {reportsData && !reportsLoading && (
@@ -1034,7 +1174,12 @@ export function AdminPanel(props: {
                           ?.slice(0, 10)
                           ?.map(
                             (
-                              dept: { department?: string; rate?: number },
+                              dept: {
+                                department: string;
+                                total: number;
+                                rejected: number;
+                                rejectionRate: number;
+                              },
                               index: number,
                             ) => (
                               <tr
@@ -1042,23 +1187,23 @@ export function AdminPanel(props: {
                                 className="border-b border-slate-100"
                               >
                                 <td className="py-2 font-medium">
-                                  {dept?.department ?? "Unknown"}
+                                  {dept.department ?? "Unknown"}
                                 </td>
-                                <td className="py-2">{dept?.total ?? 0}</td>
+                                <td className="py-2">{dept.total ?? 0}</td>
                                 <td className="py-2 text-red-600">
-                                  {dept?.rejected ?? 0}
+                                  {dept.rejected ?? 0}
                                 </td>
                                 <td className="py-2">
                                   <span
                                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                      (dept?.rejectionRate ?? 0) > 20
+                                      (dept.rejectionRate ?? 0) > 20
                                         ? "bg-red-100 text-red-700"
-                                        : (dept?.rejectionRate ?? 0) > 10
+                                        : (dept.rejectionRate ?? 0) > 10
                                           ? "bg-amber-100 text-amber-700"
                                           : "bg-green-100 text-green-700"
                                     }`}
                                   >
-                                    {dept?.rejectionRate?.toFixed?.(1) ?? 0}%
+                                    {dept.rejectionRate?.toFixed?.(1) ?? 0}%
                                   </span>
                                 </td>
                               </tr>
@@ -1091,10 +1236,10 @@ export function AdminPanel(props: {
                           ?.map(
                             (
                               trend: {
-                                month?: string;
-                                completed?: number;
-                                total?: number;
-                                avgTime?: number;
+                                month: string;
+                                started: number;
+                                completed: number;
+                                averageTimeDays: number;
                               },
                               index: number,
                             ) => (
@@ -1104,18 +1249,18 @@ export function AdminPanel(props: {
                               >
                                 <td className="py-2 font-medium">
                                   {new Date(
-                                    trend?.month + "-01",
+                                    trend.month + "-01",
                                   ).toLocaleDateString("en-US", {
                                     year: "numeric",
                                     month: "short",
                                   })}
                                 </td>
-                                <td className="py-2">{trend?.started ?? 0}</td>
+                                <td className="py-2">{trend.started ?? 0}</td>
                                 <td className="py-2 text-green-600">
-                                  {trend?.completed ?? 0}
+                                  {trend.completed ?? 0}
                                 </td>
                                 <td className="py-2">
-                                  {trend?.averageTimeDays?.toFixed?.(1) ?? 0}
+                                  {trend.averageTimeDays?.toFixed?.(1) ?? 0}
                                 </td>
                               </tr>
                             ),
@@ -1134,10 +1279,10 @@ export function AdminPanel(props: {
                     {reportsData?.bottleneckDepartments?.slice(0, 6)?.map(
                       (
                         dept: {
-                          department?: string;
-                          averageProcessingTimeDays?: number;
-                          pendingCount?: number;
-                          totalProcessed?: number;
+                          department: string;
+                          averageTimeDays: number;
+                          pendingCount: number;
+                          totalProcessed: number;
                         },
                         index: number,
                       ) => (
@@ -1146,28 +1291,25 @@ export function AdminPanel(props: {
                           className="rounded-lg border border-slate-200 p-3"
                         >
                           <div className="font-medium text-slate-900 text-sm">
-                            {dept?.department ?? "Unknown"}
+                            {dept.department ?? "Unknown"}
                           </div>
                           <div className="mt-2 space-y-1">
                             <div className="flex justify-between text-xs">
                               <span className="text-slate-600">Avg Time:</span>
                               <span className="font-medium">
-                                {dept?.averageProcessingTimeDays?.toFixed?.(
-                                  1,
-                                ) ?? 0}{" "}
-                                days
+                                {dept.averageTimeDays?.toFixed?.(1) ?? 0} days
                               </span>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-slate-600">Pending:</span>
                               <span className="font-medium text-amber-600">
-                                {dept?.pendingCount ?? 0}
+                                {dept.pendingCount ?? 0}
                               </span>
                             </div>
                             <div className="flex justify-between text-xs">
                               <span className="text-slate-600">Processed:</span>
                               <span className="font-medium text-green-600">
-                                {dept?.totalProcessed ?? 0}
+                                {dept.totalProcessed ?? 0}
                               </span>
                             </div>
                           </div>
