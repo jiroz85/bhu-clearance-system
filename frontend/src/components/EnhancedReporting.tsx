@@ -151,7 +151,7 @@ export function EnhancedReporting() {
       {/* Header */}
       <div className="rounded-xl bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-lg font-bold text-slate-900">
             Enhanced Analytics & Reporting
           </h1>
           <div className="flex gap-2">
@@ -221,7 +221,7 @@ export function EnhancedReporting() {
       {activeTab === "overview" && (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900">
               System Overview
             </h2>
             <div className="mt-4 space-y-4">
@@ -230,13 +230,13 @@ export function EnhancedReporting() {
                   <h3 className="text-sm font-medium text-slate-600">
                     Total Departments
                   </h3>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">13</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">13</p>
                 </div>
                 <div className="rounded-lg bg-blue-50 p-4">
                   <h3 className="text-sm font-medium text-blue-600">
                     Active Clearances
                   </h3>
-                  <p className="mt-2 text-2xl font-bold text-blue-700">
+                  <p className="mt-2 text-lg font-bold text-blue-700">
                     {departmentPerformance.reduce(
                       (sum, dept) => sum + dept.metrics.pending,
                       0,
@@ -248,7 +248,7 @@ export function EnhancedReporting() {
           </div>
 
           <div className="rounded-xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900">
               Quick Insights
             </h2>
             <div className="mt-4 space-y-3">
@@ -261,7 +261,7 @@ export function EnhancedReporting() {
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold text-slate-400">
+                      <span className="text-sm font-bold text-slate-400">
                         #
                         {departmentPerformance.findIndex(
                           (d) => d.department === dept.department,
@@ -295,7 +295,7 @@ export function EnhancedReporting() {
           {!loading && !error && (
             <div className="rounded-xl bg-white shadow-sm">
               <div className="p-5">
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-base font-semibold text-slate-900">
                   Department Performance Metrics
                 </h2>
               </div>
@@ -396,7 +396,7 @@ export function EnhancedReporting() {
                   key={dept.department}
                   className="rounded-xl bg-white p-5 shadow-sm"
                 >
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  <h3 className="text-base font-semibold text-slate-900 mb-4">
                     {dept.department}
                   </h3>
 
@@ -474,7 +474,7 @@ export function EnhancedReporting() {
           {error && <p className="text-sm text-red-700">{error}</p>}
           {!loading && !error && (
             <div className="rounded-xl bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+              <h2 className="text-base font-semibold text-slate-900 mb-4">
                 Clearance Trends Over Time
               </h2>
 
@@ -485,7 +485,7 @@ export function EnhancedReporting() {
                     <h3 className="text-sm font-medium text-emerald-600">
                       Total Completed
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-emerald-700">
+                    <p className="mt-2 text-lg font-bold text-emerald-700">
                       {clearanceTrends.reduce(
                         (sum, trend) => sum + trend.completed,
                         0,
@@ -496,7 +496,7 @@ export function EnhancedReporting() {
                     <h3 className="text-sm font-medium text-blue-600">
                       Currently Pending
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-blue-700">
+                    <p className="mt-2 text-lg font-bold text-blue-700">
                       {clearanceTrends.reduce(
                         (sum, trend) => sum + trend.pending,
                         0,
@@ -507,7 +507,7 @@ export function EnhancedReporting() {
                     <h3 className="text-sm font-medium text-amber-600">
                       Total Rejected
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-amber-700">
+                    <p className="mt-2 text-lg font-bold text-amber-700">
                       {clearanceTrends.reduce(
                         (sum, trend) => sum + trend.rejected,
                         0,

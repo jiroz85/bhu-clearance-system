@@ -33,7 +33,7 @@ type HODOverview = {
 type DepartmentClearance = {
   id: string;
   step: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   createdAt: string;
   reviewedAt: string | null;
   comment: string | null;
@@ -64,47 +64,9 @@ type DepartmentStatistics = {
   };
 };
 
-type BottleneckAnalysis = {
-  summary: {
-    totalPending: number;
-    critical: number;
-    urgent: number;
-    warning: number;
-  };
-  bottlenecks: {
-    critical: DepartmentClearance[];
-    urgent: DepartmentClearance[];
-    warning: DepartmentClearance[];
-  };
-  recommendations: string[];
-};
-
-type StaffPerformance = {
-  staff: Array<{
-    staff: {
-      id: string;
-      displayName: string;
-      email: string;
-    };
-    metrics: {
-      approved: number;
-      rejected: number;
-      pending: number;
-      totalProcessed: number;
-      approvalRate: number;
-      productivity: number;
-    };
-  }>;
-  summary: {
-    totalStaff: number;
-    totalProcessed: number;
-    averageApprovalRate: number;
-  };
-};
-
 export function HODDashboard() {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "clearances" | "statistics" | "bottlenecks" | "staff"
+    "overview" | "clearances" | "statistics"
   >("overview");
 
   // Overview state
@@ -118,39 +80,37 @@ export function HODDashboard() {
   const [clearancesLoading, setClearancesLoading] = useState(false);
   const [clearancesError, setClearancesError] = useState<string | null>(null);
   const [clearanceFilters, setClearanceFilters] = useState({
-    status: 'ALL' as 'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL',
+    status: "ALL" as "PENDING" | "APPROVED" | "REJECTED" | "ALL",
     overdue: false,
-    search: '',
+    search: "",
   });
-  const [clearancePagination, setClearancePagination] = useState({ skip: 0, take: 20 });
+  const [clearancePagination, setClearancePagination] = useState({
+    skip: 0,
+    take: 20,
+  });
 
   // Statistics state
-  const [statistics, setStatistics] = useState<DepartmentStatistics | null>(null);
+  const [statistics, setStatistics] = useState<DepartmentStatistics | null>(
+    null,
+  );
   const [statisticsLoading, setStatisticsLoading] = useState(false);
   const [statisticsError, setStatisticsError] = useState<string | null>(null);
-  const [statisticsTimeframe, setStatisticsTimeframe] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
-
-  // Bottlenecks state
-  const [bottlenecks, setBottlenecks] = useState<BottleneckAnalysis | null>(null);
-  const [bottlenecksLoading, setBottlenecksLoading] = useState(false);
-  const [bottlenecksError, setBottlenecksError] = useState<string | null>(null);
-
-  // Staff performance state
-  const [staffPerformance, setStaffPerformance] = useState<StaffPerformance | null>(null);
-  const [staffPerformanceLoading, setStaffPerformanceLoading] = useState(false);
-  const [staffPerformanceError, setStaffPerformanceError] = useState<string | null>(null);
+  const [statisticsTimeframe, setStatisticsTimeframe] = useState<
+    "day" | "week" | "month" | "quarter" | "year"
+  >("month");
 
   // Modal states
   const [showOverrideModal, setShowOverrideModal] = useState(false);
   const [showDelegateModal, setShowDelegateModal] = useState(false);
-  const [selectedClearance, setSelectedClearance] = useState<DepartmentClearance | null>(null);
+  const [selectedClearance, setSelectedClearance] =
+    useState<DepartmentClearance | null>(null);
   const [overrideForm, setOverrideForm] = useState({
-    action: 'APPROVE' as 'APPROVE' | 'REJECT',
-    reason: '',
+    action: "APPROVE" as "APPROVE" | "REJECT",
+    reason: "",
   });
   const [delegateForm, setDelegateForm] = useState({
-    delegateUserId: '',
-    reason: '',
+    delegateUserId: "",
+    reason: "",
   });
 
   // Load overview data
@@ -158,7 +118,9 @@ export function HODDashboard() {
     setOverviewLoading(true);
     setOverviewError(null);
     try {
-      const { data } = await api.get<HODOverview>("/api/hod-dashboard/overview");
+      const { data } = await api.get<HODOverview>(
+        "/api/hod-dashboard/overview",
+      );
       setOverview(data);
     } catch (error: any) {
       setOverviewError(error.message || "Failed to load overview");
@@ -177,7 +139,7 @@ export function HODDashboard() {
         take: clearancePagination.take.toString(),
       });
 
-      if (clearanceFilters.status !== 'ALL') {
+      if (clearanceFilters.status !== "ALL") {
         params.append("status", clearanceFilters.status);
       }
       if (clearanceFilters.overdue) {
@@ -193,7 +155,7 @@ export function HODDashboard() {
         skip: number;
         take: number;
       }>(`/api/hod-dashboard/clearances?${params}`);
-      
+
       setClearances(data.clearances);
       setClearancesTotal(data.total);
     } catch (error: any) {
@@ -208,8 +170,12 @@ export function HODDashboard() {
     setStatisticsLoading(true);
     setStatisticsError(null);
     try {
-      const params = statisticsTimeframe ? `?timeframe=${statisticsTimeframe}` : '';
-      const { data } = await api.get<DepartmentStatistics>(`/api/hod-dashboard/statistics${params}`);
+      const params = statisticsTimeframe
+        ? `?timeframe=${statisticsTimeframe}`
+        : "";
+      const { data } = await api.get<DepartmentStatistics>(
+        `/api/hod-dashboard/statistics${params}`,
+      );
       setStatistics(data);
     } catch (error: any) {
       setStatisticsError(error.message || "Failed to load statistics");
@@ -218,43 +184,18 @@ export function HODDashboard() {
     }
   };
 
-  // Load bottlenecks data
-  const loadBottlenecks = async () => {
-    setBottlenecksLoading(true);
-    setBottlenecksError(null);
-    try {
-      const { data } = await api.get<BottleneckAnalysis>("/api/hod-dashboard/bottlenecks");
-      setBottlenecks(data);
-    } catch (error: any) {
-      setBottlenecksError(error.message || "Failed to load bottleneck analysis");
-    } finally {
-      setBottlenecksLoading(false);
-    }
-  };
-
-  // Load staff performance data
-  const loadStaffPerformance = async () => {
-    setStaffPerformanceLoading(true);
-    setStaffPerformanceError(null);
-    try {
-      const { data } = await api.get<StaffPerformance>("/api/hod-dashboard/staff-performance");
-      setStaffPerformance(data);
-    } catch (error: any) {
-      setStaffPerformanceError(error.message || "Failed to load staff performance");
-    } finally {
-      setStaffPerformanceLoading(false);
-    }
-  };
-
   // Handle override decision
   const handleOverrideDecision = async () => {
     if (!selectedClearance) return;
 
     try {
-      await api.post(`/api/hod-dashboard/override/${selectedClearance.id}`, overrideForm);
+      await api.post(
+        `/api/hod-dashboard/override/${selectedClearance.id}`,
+        overrideForm,
+      );
       setShowOverrideModal(false);
       setSelectedClearance(null);
-      setOverrideForm({ action: 'APPROVE', reason: '' });
+      setOverrideForm({ action: "APPROVE", reason: "" });
       loadClearances();
       loadOverview();
     } catch (error: any) {
@@ -267,10 +208,13 @@ export function HODDashboard() {
     if (!selectedClearance) return;
 
     try {
-      await api.post(`/api/hod-dashboard/delegate/${selectedClearance.id}`, delegateForm);
+      await api.post(
+        `/api/hod-dashboard/delegate/${selectedClearance.id}`,
+        delegateForm,
+      );
       setShowDelegateModal(false);
       setSelectedClearance(null);
-      setDelegateForm({ delegateUserId: '', reason: '' });
+      setDelegateForm({ delegateUserId: "", reason: "" });
       loadClearances();
     } catch (error: any) {
       setClearancesError(error.message || "Failed to delegate approval");
@@ -278,11 +222,15 @@ export function HODDashboard() {
   };
 
   // Export analytics
-  const handleExportAnalytics = async (format: 'pdf' | 'excel') => {
+  const handleExportAnalytics = async (format: "pdf" | "excel") => {
     try {
-      const params = statisticsTimeframe ? `?format=${format}&timeframe=${statisticsTimeframe}` : `?format=${format}`;
-      const { data } = await api.get(`/api/hod-dashboard/export/analytics${params}`);
-      window.open(data.downloadUrl, '_blank');
+      const params = statisticsTimeframe
+        ? `?format=${format}&timeframe=${statisticsTimeframe}`
+        : `?format=${format}`;
+      const { data } = await api.get(
+        `/api/hod-dashboard/export/analytics${params}`,
+      );
+      window.open(data.downloadUrl, "_blank");
     } catch (error: any) {
       setStatisticsError(error.message || "Failed to export analytics");
     }
@@ -296,10 +244,6 @@ export function HODDashboard() {
       loadClearances();
     } else if (activeTab === "statistics") {
       loadStatistics();
-    } else if (activeTab === "bottlenecks") {
-      loadBottlenecks();
-    } else if (activeTab === "staff") {
-      loadStaffPerformance();
     }
   }, [activeTab, clearanceFilters, clearancePagination, statisticsTimeframe]);
 
@@ -321,10 +265,10 @@ export function HODDashboard() {
       {/* Header */}
       <div className="rounded-xl bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-slate-900">
             HOD Dashboard
             {overview && (
-              <span className="ml-2 text-lg font-medium text-slate-600">
+              <span className="ml-2 text-base font-medium text-slate-600">
                 - {overview.department.displayName}
               </span>
             )}
@@ -332,13 +276,13 @@ export function HODDashboard() {
           <div className="flex gap-2">
             <button
               className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => handleExportAnalytics('pdf')}
+              onClick={() => handleExportAnalytics("pdf")}
             >
               📄 Export PDF
             </button>
             <button
               className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => handleExportAnalytics('excel')}
+              onClick={() => handleExportAnalytics("excel")}
             >
               📊 Export Excel
             </button>
@@ -392,7 +336,7 @@ export function HODDashboard() {
                     <h3 className="text-sm font-medium text-slate-600">
                       Total Clearances
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">
+                    <p className="mt-2 text-xl font-bold text-slate-900">
                       {overview.metrics.totalClearances}
                     </p>
                   </div>
@@ -400,7 +344,7 @@ export function HODDashboard() {
                     <h3 className="text-sm font-medium text-amber-600">
                       Pending
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-amber-700">
+                    <p className="mt-2 text-xl font-bold text-amber-700">
                       {overview.metrics.pendingClearances}
                     </p>
                   </div>
@@ -408,7 +352,7 @@ export function HODDashboard() {
                     <h3 className="text-sm font-medium text-emerald-600">
                       Approved Today
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-emerald-700">
+                    <p className="mt-2 text-xl font-bold text-emerald-700">
                       {overview.metrics.approvedToday}
                     </p>
                   </div>
@@ -416,7 +360,7 @@ export function HODDashboard() {
                     <h3 className="text-sm font-medium text-blue-600">
                       Completion Rate
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-blue-700">
+                    <p className="mt-2 text-xl font-bold text-blue-700">
                       {overview.metrics.completionRate.toFixed(1)}%
                     </p>
                   </div>
@@ -434,7 +378,8 @@ export function HODDashboard() {
                       <div className="flex items-center">
                         <span className="text-red-700">⚠️</span>
                         <span className="ml-2 text-sm font-medium text-red-900">
-                          {overview.alerts.overdueCount} overdue clearances require attention
+                          {overview.alerts.overdueCount} overdue clearances
+                          require attention
                         </span>
                       </div>
                     </div>
@@ -444,21 +389,23 @@ export function HODDashboard() {
                       <div className="flex items-center">
                         <span className="text-amber-700">📋</span>
                         <span className="ml-2 text-sm font-medium text-amber-900">
-                          High pending volume: {overview.alerts.highPendingCount} clearances
+                          High pending volume:{" "}
+                          {overview.alerts.highPendingCount} clearances
                         </span>
                       </div>
                     </div>
                   )}
-                  {overview.alerts.overdueCount === 0 && overview.alerts.highPendingCount === 0 && (
-                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-                      <div className="flex items-center">
-                        <span className="text-emerald-700">✅</span>
-                        <span className="ml-2 text-sm font-medium text-emerald-900">
-                          All clearances are within normal processing time
-                        </span>
+                  {overview.alerts.overdueCount === 0 &&
+                    overview.alerts.highPendingCount === 0 && (
+                      <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                        <div className="flex items-center">
+                          <span className="text-emerald-700">✅</span>
+                          <span className="ml-2 text-sm font-medium text-emerald-900">
+                            All clearances are within normal processing time
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
 
@@ -473,7 +420,10 @@ export function HODDashboard() {
                   </div>
                   <div className="mt-2 max-h-40 overflow-auto">
                     {overview.staff.members.map((staff) => (
-                      <div key={staff.id} className="py-1 text-sm text-slate-700">
+                      <div
+                        key={staff.id}
+                        className="py-1 text-sm text-slate-700"
+                      >
                         {staff.displayName} ({staff.email})
                       </div>
                     ))}
@@ -497,7 +447,12 @@ export function HODDashboard() {
               <select
                 className="rounded border border-slate-200 px-3 py-2 text-sm"
                 value={clearanceFilters.status}
-                onChange={(e) => setClearanceFilters({ ...clearanceFilters, status: e.target.value as any })}
+                onChange={(e) =>
+                  setClearanceFilters({
+                    ...clearanceFilters,
+                    status: e.target.value as any,
+                  })
+                }
               >
                 <option value="ALL">All Status</option>
                 <option value="PENDING">Pending</option>
@@ -509,14 +464,24 @@ export function HODDashboard() {
                 placeholder="Search students..."
                 className="rounded border border-slate-200 px-3 py-2 text-sm"
                 value={clearanceFilters.search}
-                onChange={(e) => setClearanceFilters({ ...clearanceFilters, search: e.target.value })}
+                onChange={(e) =>
+                  setClearanceFilters({
+                    ...clearanceFilters,
+                    search: e.target.value,
+                  })
+                }
               />
               <label className="flex items-center text-sm">
                 <input
                   type="checkbox"
                   className="mr-2"
                   checked={clearanceFilters.overdue}
-                  onChange={(e) => setClearanceFilters({ ...clearanceFilters, overdue: e.target.checked })}
+                  onChange={(e) =>
+                    setClearanceFilters({
+                      ...clearanceFilters,
+                      overdue: e.target.checked,
+                    })
+                  }
                 />
                 Overdue only
               </label>
@@ -545,14 +510,19 @@ export function HODDashboard() {
                   </thead>
                   <tbody>
                     {clearances.map((clearance) => (
-                      <tr key={clearance.id} className="border-b border-slate-100">
+                      <tr
+                        key={clearance.id}
+                        className="border-b border-slate-100"
+                      >
                         <td className="py-3">
                           <div>
                             <div className="font-medium text-slate-900">
-                              {clearance.student.displayName || clearance.student.email}
+                              {clearance.student.displayName ||
+                                clearance.student.email}
                             </div>
                             <div className="text-xs text-slate-500">
-                              {clearance.student.studentUniversityId} • {clearance.student.studentDepartment}
+                              {clearance.student.studentUniversityId} •{" "}
+                              {clearance.student.studentDepartment}
                             </div>
                           </div>
                         </td>
@@ -560,7 +530,7 @@ export function HODDashboard() {
                           <div className="flex items-center gap-2">
                             <span
                               className={`rounded-full px-2 py-1 text-xs font-medium ${statusBadge(
-                                clearance.status
+                                clearance.status,
                               )}`}
                             >
                               {clearance.status}
@@ -577,12 +547,14 @@ export function HODDashboard() {
                         </td>
                         <td className="py-3 text-slate-700">
                           {clearance.reviewedAt
-                            ? new Date(clearance.reviewedAt).toLocaleDateString()
-                            : '—'}
+                            ? new Date(
+                                clearance.reviewedAt,
+                              ).toLocaleDateString()
+                            : "—"}
                         </td>
                         <td className="py-3">
                           <div className="flex gap-2">
-                            {clearance.status === 'PENDING' && (
+                            {clearance.status === "PENDING" && (
                               <>
                                 <button
                                   className="text-xs text-blue-600 hover:text-blue-800"
@@ -631,25 +603,38 @@ export function HODDashboard() {
               <div className="mt-4 flex items-center justify-between">
                 <button
                   className="rounded border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
-                  onClick={() => setClearancePagination({
-                    ...clearancePagination,
-                    skip: Math.max(0, clearancePagination.skip - clearancePagination.take)
-                  })}
+                  onClick={() =>
+                    setClearancePagination({
+                      ...clearancePagination,
+                      skip: Math.max(
+                        0,
+                        clearancePagination.skip - clearancePagination.take,
+                      ),
+                    })
+                  }
                   disabled={clearancePagination.skip === 0}
                 >
                   Previous
                 </button>
                 <span className="text-sm text-slate-600">
-                  Page {Math.floor(clearancePagination.skip / clearancePagination.take) + 1} of{" "}
-                  {Math.ceil(clearancesTotal / clearancePagination.take)}
+                  Page{" "}
+                  {Math.floor(
+                    clearancePagination.skip / clearancePagination.take,
+                  ) + 1}{" "}
+                  of {Math.ceil(clearancesTotal / clearancePagination.take)}
                 </span>
                 <button
                   className="rounded border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
-                  onClick={() => setClearancePagination({
-                    ...clearancePagination,
-                    skip: clearancePagination.skip + clearancePagination.take
-                  })}
-                  disabled={clearancePagination.skip + clearancePagination.take >= clearancesTotal}
+                  onClick={() =>
+                    setClearancePagination({
+                      ...clearancePagination,
+                      skip: clearancePagination.skip + clearancePagination.take,
+                    })
+                  }
+                  disabled={
+                    clearancePagination.skip + clearancePagination.take >=
+                    clearancesTotal
+                  }
                 >
                   Next
                 </button>
@@ -690,7 +675,7 @@ export function HODDashboard() {
                 <h3 className="text-sm font-medium text-slate-600">
                   Total Processed
                 </h3>
-                <p className="mt-2 text-2xl font-bold text-slate-900">
+                <p className="mt-2 text-xl font-bold text-slate-900">
                   {statistics.metrics.totalProcessed}
                 </p>
               </div>
@@ -698,7 +683,7 @@ export function HODDashboard() {
                 <h3 className="text-sm font-medium text-emerald-600">
                   Approval Rate
                 </h3>
-                <p className="mt-2 text-2xl font-bold text-emerald-700">
+                <p className="mt-2 text-xl font-bold text-emerald-700">
                   {statistics.metrics.approvalRate.toFixed(1)}%
                 </p>
               </div>
@@ -706,7 +691,7 @@ export function HODDashboard() {
                 <h3 className="text-sm font-medium text-blue-600">
                   Avg Processing Time
                 </h3>
-                <p className="mt-2 text-2xl font-bold text-blue-700">
+                <p className="mt-2 text-xl font-bold text-blue-700">
                   {statistics.metrics.averageProcessingTimeHours}h
                 </p>
               </div>
@@ -730,7 +715,12 @@ export function HODDashboard() {
                 <select
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                   value={overrideForm.action}
-                  onChange={(e) => setOverrideForm({ ...overrideForm, action: e.target.value as any })}
+                  onChange={(e) =>
+                    setOverrideForm({
+                      ...overrideForm,
+                      action: e.target.value as any,
+                    })
+                  }
                 >
                   <option value="APPROVE">Approve</option>
                   <option value="REJECT">Reject</option>
@@ -744,7 +734,9 @@ export function HODDashboard() {
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                   rows={3}
                   value={overrideForm.reason}
-                  onChange={(e) => setOverrideForm({ ...overrideForm, reason: e.target.value })}
+                  onChange={(e) =>
+                    setOverrideForm({ ...overrideForm, reason: e.target.value })
+                  }
                   placeholder="Enter reason for override..."
                 />
               </div>
@@ -755,7 +747,7 @@ export function HODDashboard() {
                 onClick={() => {
                   setShowOverrideModal(false);
                   setSelectedClearance(null);
-                  setOverrideForm({ action: 'APPROVE', reason: '' });
+                  setOverrideForm({ action: "APPROVE", reason: "" });
                 }}
               >
                 Cancel
@@ -786,7 +778,12 @@ export function HODDashboard() {
                 <select
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                   value={delegateForm.delegateUserId}
-                  onChange={(e) => setDelegateForm({ ...delegateForm, delegateUserId: e.target.value })}
+                  onChange={(e) =>
+                    setDelegateForm({
+                      ...delegateForm,
+                      delegateUserId: e.target.value,
+                    })
+                  }
                 >
                   <option value="">Select staff member...</option>
                   {overview?.staff.members.map((staff) => (
@@ -804,7 +801,9 @@ export function HODDashboard() {
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm"
                   rows={3}
                   value={delegateForm.reason}
-                  onChange={(e) => setDelegateForm({ ...delegateForm, reason: e.target.value })}
+                  onChange={(e) =>
+                    setDelegateForm({ ...delegateForm, reason: e.target.value })
+                  }
                   placeholder="Enter reason for delegation..."
                 />
               </div>
@@ -815,7 +814,7 @@ export function HODDashboard() {
                 onClick={() => {
                   setShowDelegateModal(false);
                   setSelectedClearance(null);
-                  setDelegateForm({ delegateUserId: '', reason: '' });
+                  setDelegateForm({ delegateUserId: "", reason: "" });
                 }}
               >
                 Cancel

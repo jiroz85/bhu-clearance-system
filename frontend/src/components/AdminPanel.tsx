@@ -360,7 +360,7 @@ export function AdminPanel(props: {
             });
 
             if (user.email && user.displayName && user.role) {
-              users.push(user);
+              users.push(user as BulkImportUserDto);
             }
           }
 
@@ -430,68 +430,198 @@ export function AdminPanel(props: {
   return (
     <section className="space-y-4">
       {/* Tab Navigation */}
-      <div className="rounded-xl bg-white p-5 shadow-sm">
-        <div className="flex space-x-4 border-b border-slate-200">
+      <div className="rounded-2xl bg-white/95 backdrop-blur-xl p-6 shadow-xl border border-slate-200/60">
+        <div className="flex space-x-6 border-b border-slate-200/60">
           <button
-            className={`pb-2 px-1 text-sm font-medium ${
+            className={`pb-4 px-2 text-sm font-bold transition-all duration-300 ${
               activeTab === "overview"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
+                ? "border-b-3 border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg"
             }`}
             onClick={() => handleTabChange("overview")}
           >
-            Overview
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              Overview
+            </div>
           </button>
           <button
-            className={`pb-2 px-1 text-sm font-medium ${
+            className={`pb-4 px-2 text-sm font-bold transition-all duration-300 ${
               activeTab === "users"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
+                ? "border-b-3 border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg"
             }`}
             onClick={() => handleTabChange("users")}
           >
-            User Management
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                />
+              </svg>
+              User Management
+            </div>
           </button>
           <button
-            className={`pb-2 px-1 text-sm font-medium ${
+            className={`pb-4 px-2 text-sm font-bold transition-all duration-300 ${
               activeTab === "reports"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-slate-600 hover:text-slate-900"
+                ? "border-b-3 border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg"
             }`}
             onClick={() => handleTabChange("reports")}
           >
-            Reports & Analytics
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              Reports & Analytics
+            </div>
           </button>
         </div>
       </div>
 
       {/* Overview Tab */}
       {activeTab === "overview" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-white p-5 shadow-sm md:col-span-2">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Admin overview
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl bg-white/95 backdrop-blur-xl p-8 shadow-xl border border-slate-200/60 md:col-span-2">
+            <h2 className="text-lg font-bold text-slate-900 mb-6">
+              Admin Overview
             </h2>
             {adminSummary && (
-              <ul className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-4">
-                <li className="rounded-lg bg-slate-50 px-3 py-2">
-                  Total: <strong>{adminSummary.total}</strong>
+              <ul className="grid gap-4 text-sm text-slate-700 sm:grid-cols-4">
+                <li className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 px-6 py-4 border border-slate-200/60 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-slate-200 rounded-xl p-2">
+                      <svg
+                        className="w-4 h-4 text-slate-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-slate-900">Total</span>
+                  </div>
+                  <div className="text-lg font-bold text-slate-900">
+                    {adminSummary.total}
+                  </div>
                 </li>
-                <li className="rounded-lg bg-emerald-50 px-3 py-2">
-                  Cleared: <strong>{adminSummary.fullyCleared}</strong>
+                <li className="rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 px-6 py-4 border border-emerald-200/60 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-emerald-200 rounded-xl p-2">
+                      <svg
+                        className="w-4 h-4 text-emerald-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-emerald-800">
+                      Cleared
+                    </span>
+                  </div>
+                  <div className="text-xl font-bold text-emerald-700">
+                    {adminSummary.fullyCleared}
+                  </div>
                 </li>
-                <li className="rounded-lg bg-amber-50 px-3 py-2">
-                  Active pipeline: <strong>{adminSummary.inProgress}</strong>
+                <li className="rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 px-6 py-4 border border-amber-200/60 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-amber-200 rounded-xl p-2">
+                      <svg
+                        className="w-4 h-4 text-amber-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-amber-800">
+                      Active Pipeline
+                    </span>
+                  </div>
+                  <div className="text-xl font-bold text-amber-700">
+                    {adminSummary.inProgress}
+                  </div>
                 </li>
-                <li className="rounded-lg bg-red-50 px-3 py-2">
-                  Paused (rejected):{" "}
-                  <strong>{adminSummary.pausedRejected}</strong>
+                <li className="rounded-2xl bg-gradient-to-br from-red-50 to-red-100 px-6 py-4 border border-red-200/60 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-red-200 rounded-xl p-2">
+                      <svg
+                        className="w-4 h-4 text-red-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-red-800">
+                      Paused (Rejected)
+                    </span>
+                  </div>
+                  <div className="text-xl font-bold text-red-700">
+                    {adminSummary.pausedRejected}
+                  </div>
                 </li>
               </ul>
             )}
           </div>
           <div className="rounded-xl bg-white p-5 shadow-sm md:col-span-2">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900">
               Audit log (recent)
             </h2>
             <div className="mt-3 max-h-80 overflow-auto rounded border border-slate-100">
@@ -538,7 +668,7 @@ export function AdminPanel(props: {
           {/* Users Header */}
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900">
                 User Management
               </h2>
               <div className="flex gap-2">
@@ -736,7 +866,7 @@ export function AdminPanel(props: {
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="text-base font-semibold text-slate-900">
               Create User
             </h3>
             <div className="mt-4 space-y-3">
@@ -861,7 +991,9 @@ export function AdminPanel(props: {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-slate-900">Edit User</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              Edit User
+            </h3>
             <div className="mt-4 space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-600">
@@ -990,7 +1122,7 @@ export function AdminPanel(props: {
         <div className="space-y-4">
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900">
                 Reports & Analytics
               </h2>
               <div className="flex gap-2">
@@ -1098,7 +1230,7 @@ export function AdminPanel(props: {
                     <h3 className="text-sm font-medium text-slate-600">
                       Total Clearances
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-slate-900">
+                    <p className="mt-2 text-xl font-bold text-slate-900">
                       {reportsData?.totalClearances ?? 0}
                     </p>
                   </div>
@@ -1106,7 +1238,7 @@ export function AdminPanel(props: {
                     <h3 className="text-sm font-medium text-emerald-600">
                       Fully Cleared
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-emerald-700">
+                    <p className="mt-2 text-xl font-bold text-emerald-700">
                       {reportsData?.fullyCleared ?? 0}
                     </p>
                     <p className="text-xs text-emerald-600 mt-1">
@@ -1118,7 +1250,7 @@ export function AdminPanel(props: {
                     <h3 className="text-sm font-medium text-blue-600">
                       Avg Processing Time
                     </h3>
-                    <p className="mt-2 text-2xl font-bold text-blue-700">
+                    <p className="mt-2 text-xl font-bold text-blue-700">
                       {reportsData?.averageProcessingTimeDays?.toFixed?.(1) ??
                         0}{" "}
                       days
@@ -1134,7 +1266,7 @@ export function AdminPanel(props: {
                   <div className="grid gap-3 md:grid-cols-5">
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <div className="text-xs text-slate-600">In Progress</div>
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-base font-bold text-blue-600">
                         {reportsData?.inProgress ?? 0}
                       </div>
                     </div>
@@ -1142,25 +1274,25 @@ export function AdminPanel(props: {
                       <div className="text-xs text-slate-600">
                         Paused/Rejected
                       </div>
-                      <div className="text-lg font-bold text-red-600">
+                      <div className="text-base font-bold text-red-600">
                         {reportsData?.pausedRejected ?? 0}
                       </div>
                     </div>
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <div className="text-xs text-slate-600">Draft</div>
-                      <div className="text-lg font-bold text-slate-600">
+                      <div className="text-base font-bold text-slate-600">
                         {reportsData?.draft ?? 0}
                       </div>
                     </div>
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <div className="text-xs text-slate-600">Cancelled</div>
-                      <div className="text-lg font-bold text-slate-600">
+                      <div className="text-base font-bold text-slate-600">
                         {reportsData?.cancelled ?? 0}
                       </div>
                     </div>
                     <div className="rounded-lg bg-white border border-slate-200 p-3">
                       <div className="text-xs text-slate-600">Total</div>
-                      <div className="text-lg font-bold text-slate-900">
+                      <div className="text-base font-bold text-slate-900">
                         {reportsData?.totalClearances ?? 0}
                       </div>
                     </div>

@@ -121,10 +121,10 @@ const CertificateVerification: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
             Bule Hora University
           </h1>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">
+          <h2 className="text-base font-semibold text-gray-700 mb-2">
             Certificate Verification
           </h2>
           <p className="text-gray-600">
@@ -204,7 +204,9 @@ const CertificateVerification: React.FC = () => {
         {/* Verification Result */}
         {result && (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Verification Result</h3>
+            <h3 className="text-base font-semibold mb-4">
+              Verification Result
+            </h3>
 
             {/* Certificate Validity */}
             <div className="mb-4">
@@ -226,7 +228,7 @@ const CertificateVerification: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center mb-2">
-                  <span className="font-bold text-lg">
+                  <span className="font-bold text-base">
                     {getStatusIcon(result.fileIntegrity)} {result.fileIntegrity}
                   </span>
                 </div>
