@@ -202,6 +202,19 @@ export function DepartmentDashboard({
     setCurrentPage(1);
   }, [searchTerm, filterBy, sortBy]);
 
+  // Check if all required department fields are completed
+  const isFormComplete = useMemo(() => {
+    if (!departmentConfig.fields.length) return true;
+
+    return departmentConfig.fields.every((field) => {
+      if (!field.required) return true;
+
+      const value = departmentData[field.key];
+      if (field.type === "boolean") return value === true;
+      return value !== "" && value !== null && value !== undefined;
+    });
+  }, [departmentData, departmentConfig.fields]);
+
   const handleApprove = async () => {
     if (selectedRow && !isApproving) {
       setIsApproving(true);
@@ -263,28 +276,28 @@ export function DepartmentDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto p-8 space-y-10 animate-fadeIn">
+      <div className="max-w-7xl mx-auto p-4 space-y-4 animate-fadeIn">
         {/* Department Header */}
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 overflow-hidden hover:shadow-3xl transition-all duration-500">
-          <div className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 px-12 py-10">
-            <div className="flex items-center gap-10">
+          <div className="bg-gradient-to-r from-slate-50 via-blue-50 to-indigo-50 px-4 py-3">
+            <div className="flex items-center gap-4">
               <div
-                className="flex h-28 w-28 items-center justify-center rounded-3xl text-3xl shadow-2xl border border-white/60 backdrop-blur-xl hover:scale-105 transition-transform duration-300"
+                className="flex h-14 w-14 items-center justify-center rounded-xl text-xl shadow-lg border border-white/60 backdrop-blur-xl hover:scale-105 transition-transform duration-300"
                 style={{ backgroundColor: `${departmentConfig.color}20` }}
               >
                 {departmentConfig.icon}
               </div>
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">
                   {departmentConfig.displayName}
                 </h1>
-                <p className="text-slate-600 mt-4 text-lg leading-relaxed">
+                <p className="text-slate-600 mt-1 text-sm leading-relaxed">
                   {departmentConfig.description}
                 </p>
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-8 py-4 text-sm font-bold text-slate-700 border border-slate-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200/60 shadow-md hover:shadow-lg transition-all duration-300">
                     <svg
-                      className="w-6 h-6 mr-4"
+                      className="w-3 h-3 mr-1"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -299,9 +312,9 @@ export function DepartmentDashboard({
                     Step {departmentConfig.stepOrder} of 13
                   </span>
                   {departmentConfig.features.requiresFinePayment && (
-                    <span className="inline-flex items-center rounded-full bg-amber-50 px-8 py-4 text-sm font-bold text-amber-700 border border-amber-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 border border-amber-200/60 shadow-md hover:shadow-lg transition-all duration-300">
                       <svg
-                        className="w-6 h-6 mr-4"
+                        className="w-3 h-3 mr-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -317,9 +330,9 @@ export function DepartmentDashboard({
                     </span>
                   )}
                   {departmentConfig.features.requiresItemReturn && (
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-8 py-4 text-sm font-bold text-blue-700 border border-blue-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-200/60 shadow-md hover:shadow-lg transition-all duration-300">
                       <svg
-                        className="w-6 h-6 mr-4"
+                        className="w-3 h-3 mr-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -338,10 +351,10 @@ export function DepartmentDashboard({
               </div>
               <button
                 onClick={onRefresh}
-                className="group rounded-2xl bg-white px-10 py-6 text-slate-600 hover:bg-slate-50 transition-all duration-300 shadow-xl border border-slate-200/60 hover:shadow-2xl hover:-translate-y-1 hover:scale-105"
+                className="group rounded-lg bg-white px-4 py-2 text-slate-600 hover:bg-slate-50 transition-all duration-300 shadow-md border border-slate-200/60 hover:shadow-lg hover:-translate-y-1 hover:scale-105"
               >
                 <svg
-                  className="w-7 h-7 group-hover:rotate-180 transition-transform duration-500"
+                  className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -360,23 +373,23 @@ export function DepartmentDashboard({
 
         {/* Metrics Cards */}
         {metrics ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Total Requests
                   </p>
-                  <p className="mt-3 text-2xl font-black text-slate-900">
+                  <p className="mt-1 text-lg font-black text-slate-900">
                     {metrics.summary?.total || 0}
                   </p>
-                  <p className="text-sm text-slate-500 mt-2 font-medium">
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
                     Last {metrics.timeframe}
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl p-4 shadow-lg hover:scale-110 transition-transform duration-300">
+                <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg p-2 shadow-md hover:scale-110 transition-transform duration-300">
                   <svg
-                    className="w-8 h-8 text-slate-600"
+                    className="w-5 h-5 text-slate-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -391,22 +404,22 @@ export function DepartmentDashboard({
                 </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+            <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Approved
                   </p>
-                  <p className="mt-3 text-2xl font-black text-emerald-600">
+                  <p className="mt-1 text-lg font-black text-emerald-600">
                     {metrics.summary?.approved || 0}
                   </p>
-                  <p className="text-sm text-slate-500 mt-2 font-medium">
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
                     {metrics.summary?.approvalRate?.toFixed(1) || 0}% rate
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl p-4 shadow-lg hover:scale-110 transition-transform duration-300">
+                <div className="bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg p-2 shadow-md hover:scale-110 transition-transform duration-300">
                   <svg
-                    className="w-8 h-8 text-emerald-600"
+                    className="w-5 h-5 text-emerald-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -421,22 +434,22 @@ export function DepartmentDashboard({
                 </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+            <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Rejected
                   </p>
-                  <p className="mt-3 text-2xl font-black text-red-600">
+                  <p className="mt-1 text-lg font-black text-red-600">
                     {metrics.summary?.rejected || 0}
                   </p>
-                  <p className="text-sm text-slate-500 mt-2 font-medium">
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
                     {metrics.summary?.rejectionRate?.toFixed(1) || 0}% rate
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-2xl p-4 shadow-lg hover:scale-110 transition-transform duration-300">
+                <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg p-2 shadow-md hover:scale-110 transition-transform duration-300">
                   <svg
-                    className="w-8 h-8 text-red-600"
+                    className="w-5 h-5 text-red-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -451,22 +464,22 @@ export function DepartmentDashboard({
                 </div>
               </div>
             </div>
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 p-8 hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:-translate-y-2">
+            <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Pending
                   </p>
-                  <p className="mt-3 text-2xl font-black text-amber-600">
+                  <p className="mt-1 text-lg font-black text-amber-600">
                     {metrics.summary?.pending || 0}
                   </p>
-                  <p className="text-sm text-slate-500 mt-2 font-medium">
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
                     Awaiting action
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl p-4 shadow-lg hover:scale-110 transition-transform duration-300">
+                <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg p-2 shadow-md hover:scale-110 transition-transform duration-300">
                   <svg
-                    className="w-8 h-8 text-amber-600"
+                    className="w-5 h-5 text-amber-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -505,11 +518,11 @@ export function DepartmentDashboard({
 
         {/* Notifications */}
         {notifs.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-blue-100 rounded-full p-2">
+          <div className="bg-white rounded-xl shadow-md border border-slate-200/50 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-blue-100 rounded-full p-1">
                 <svg
-                  className="w-5 h-5 text-blue-600"
+                  className="w-4 h-4 text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -522,23 +535,25 @@ export function DepartmentDashboard({
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-sm font-semibold text-slate-900">
                 Recent Notifications
               </h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifs.slice(0, 3).map((n) => (
                 <div
                   key={n.id}
-                  className="rounded-xl border border-slate-100 bg-gradient-to-r from-slate-50 to-white p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="rounded-lg border border-slate-100 bg-gradient-to-r from-slate-50 to-white p-2 hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="bg-slate-200 rounded-full p-1 mt-1">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                    <div className="bg-slate-200 rounded-full p-0.5 mt-0.5">
+                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-800">{n.title}</p>
-                      <p className="text-slate-600 mt-1">{n.body}</p>
+                      <p className="font-semibold text-slate-800 text-sm">
+                        {n.title}
+                      </p>
+                      <p className="text-slate-600 mt-0.5 text-xs">{n.body}</p>
                     </div>
                   </div>
                 </div>
@@ -548,19 +563,19 @@ export function DepartmentDashboard({
         )}
 
         {/* Queue Management */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-6 border-b border-slate-200/50">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="bg-white rounded-xl shadow-md border border-slate-200/50 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 border-b border-slate-200/50">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
+                <h2 className="text-base font-bold text-slate-900">
                   Pending Clearances
                 </h2>
-                <p className="text-slate-600 mt-1">
+                <p className="text-slate-600 text-xs">
                   Students requiring {departmentConfig.displayName} clearance
                 </p>
               </div>
-              <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-slate-200">
-                <p className="text-sm font-medium text-slate-700">
+              <div className="bg-white rounded-lg px-2 py-1 shadow-sm border border-slate-200">
+                <p className="text-xs font-medium text-slate-700">
                   Showing{" "}
                   <span className="text-slate-900 font-bold">
                     {paginatedRows.length}
@@ -575,13 +590,13 @@ export function DepartmentDashboard({
             </div>
           </div>
 
-          <div className="p-8">
+          <div className="p-3">
             {/* Filters */}
-            <div className="flex flex-col gap-4 sm:flex-row mb-8">
+            <div className="flex flex-col gap-2 sm:flex-row mb-3">
               <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-slate-400"
+                    className="h-3 w-3 text-slate-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -597,13 +612,13 @@ export function DepartmentDashboard({
                 <input
                   type="text"
                   placeholder="Search by name, ID, or reference..."
-                  className="block w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="block w-full pl-7 pr-2 py-1.5 border border-slate-200 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <select
-                className="px-4 py-3 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as FilterOption)}
               >
@@ -612,7 +627,7 @@ export function DepartmentDashboard({
                 <option value="overdue">Overdue (3+ days)</option>
               </select>
               <select
-                className="px-4 py-3 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
               >
@@ -901,8 +916,8 @@ export function DepartmentDashboard({
         {/* Approve Modal */}
         {showApproveModal && selectedRow && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-slide-up">
-              <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 px-8 py-6 border-b border-emerald-200">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-slide-up relative">
+              <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 px-8 py-6 border-b border-emerald-200 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-600 rounded-full p-2">
                     <svg
@@ -930,7 +945,7 @@ export function DepartmentDashboard({
                 </div>
               </div>
 
-              <div className="p-8">
+              <div className="p-8 flex-1 overflow-y-auto pb-24">
                 {/* Department-Specific Component */}
                 {departmentConfig.fields.length > 0 && (
                   <div className="space-y-6 mb-8">
@@ -956,7 +971,7 @@ export function DepartmentDashboard({
                   </div>
                 )}
 
-                <div className="flex gap-4 justify-end">
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-6 flex gap-4 justify-end">
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-200"
@@ -984,7 +999,7 @@ export function DepartmentDashboard({
                     type="button"
                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                     onClick={handleApprove}
-                    disabled={isApproving}
+                    disabled={isApproving || !isFormComplete}
                   >
                     {isApproving ? (
                       <>
@@ -1002,6 +1017,23 @@ export function DepartmentDashboard({
                           />
                         </svg>
                         Approving...
+                      </>
+                    ) : !isFormComplete ? (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
+                        </svg>
+                        Complete Required Fields
                       </>
                     ) : (
                       <>

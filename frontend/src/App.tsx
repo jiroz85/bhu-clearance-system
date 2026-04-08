@@ -586,7 +586,7 @@ function App() {
               </div>
 
               <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <p className="text-xs text-slate-600 text-center">
+                <div className="text-xs text-slate-600 text-center">
                   {quickLogin ? (
                     <>
                       <span className="font-semibold">Demo emails:</span>
@@ -605,7 +605,7 @@ function App() {
                   ) : (
                     "Use your university email and password to sign in."
                   )}
-                </p>
+                </div>
               </div>
             </div>
           </div>
@@ -859,8 +859,8 @@ function App() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <main className="flex-1 p-3 overflow-auto">
+          <div className="max-w-6xl mx-auto space-y-4">
             {auth.role === "STUDENT" && (
               <StudentDashboard
                 loading={loading}

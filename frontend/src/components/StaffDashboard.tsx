@@ -125,27 +125,25 @@ export function StaffDashboard(props: {
   }, []);
 
   return (
-    <section className="space-y-8 animate-fadeIn">
-      <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 overflow-hidden hover:shadow-3xl transition-all duration-500">
+    <section className="space-y-1 animate-fadeIn">
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-white/50 overflow-hidden hover:shadow-md transition-all duration-500">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-8 py-8 border-b border-emerald-100/50 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-1 py-1 border-b border-emerald-100/50 relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-xs font-bold text-white tracking-tight">
                 Department Staff Queue
               </h2>
-              <p className="text-emerald-100 mt-2 text-sm leading-relaxed">
+              <p className="text-emerald-100 text-xs leading-tight">
                 You only see students whose{" "}
                 <strong className="text-emerald-50">active</strong> pending step
                 matches your assigned office (strict 1→13 order).
               </p>
             </div>
-            <div className="bg-white/25 backdrop-blur-md rounded-2xl px-8 py-4 border border-white/40 shadow-xl">
+            <div className="bg-white/25 backdrop-blur-md rounded px-1 py-0.5 border border-white/40 shadow-sm">
               <div className="text-center">
-                <p className="text-xs font-medium text-emerald-100 mb-1">
-                  Showing
-                </p>
-                <p className="text-sm font-bold text-white">
+                <p className="text-xs font-medium text-emerald-100">Showing</p>
+                <p className="text-xs font-bold text-white">
                   {paginatedRows.length}
                 </p>
                 <p className="text-xs font-medium text-emerald-100">
@@ -156,14 +154,14 @@ export function StaffDashboard(props: {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-1">
           {/* Filters and Controls */}
-          <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-2xl p-4 border border-slate-200/50 mb-6 shadow-lg backdrop-blur-sm">
-            <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded p-1 border border-slate-200/50 mb-1 shadow-sm backdrop-blur-sm">
+            <div className="flex flex-col gap-1 lg:flex-row">
               <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                   <svg
-                    className="h-6 w-6 text-slate-400"
+                    className="h-3 w-3 text-slate-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -179,14 +177,14 @@ export function StaffDashboard(props: {
                 <input
                   type="text"
                   placeholder="Search by name, ID, or reference..."
-                  className="block w-full pl-14 pr-5 py-3 border border-slate-200 rounded-2xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-lg hover:shadow-xl bg-white/80 backdrop-blur-sm"
+                  className="block w-full pl-6 pr-2 py-1 border border-slate-200 rounded text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-sm hover:shadow bg-white/80 backdrop-blur-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-1">
                 <select
-                  className="px-4 py-3 border border-slate-200 rounded-2xl text-sm bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+                  className="px-1 py-1 border border-slate-200 rounded text-xs bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-sm hover:shadow font-medium"
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value as FilterOption)}
                 >
@@ -195,7 +193,7 @@ export function StaffDashboard(props: {
                   <option value="overdue">Overdue (3+ days)</option>
                 </select>
                 <select
-                  className="px-4 py-3 border border-slate-200 rounded-2xl text-sm bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+                  className="px-1 py-1 border border-slate-200 rounded text-xs bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 shadow-sm hover:shadow font-medium"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                 >
@@ -209,11 +207,11 @@ export function StaffDashboard(props: {
 
           {/* Notifications */}
           {notifs.length > 0 && (
-            <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-4 shadow-lg">
-              <div className="flex items-start gap-4">
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-3 shadow-lg">
+            <div className="mb-1 bg-gradient-to-r from-amber-50 to-orange-50 rounded border border-amber-200 p-1 shadow-sm">
+              <div className="flex items-start gap-1">
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded p-0.5 shadow-sm">
                   <svg
-                    className="w-6 h-6 text-white"
+                    className="w-3 h-3 text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -227,27 +225,27 @@ export function StaffDashboard(props: {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-slate-900 text-sm">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h4 className="font-bold text-slate-900 text-xs">
                       Recent Notifications
                     </h4>
-                    <span className="bg-amber-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="bg-amber-600 text-white text-xs font-semibold px-1 py-0.5 rounded-full">
                       {notifs.length} new
                     </span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-0.5">
                     {notifs.slice(0, 5).map((n, index) => (
                       <div
                         key={n.id}
-                        className="flex items-start gap-3 p-2 bg-white/70 backdrop-blur-sm rounded-xl border border-amber-100 hover:bg-white transition-all duration-200"
+                        className="flex items-start gap-1 p-0.5 bg-white/70 backdrop-blur-sm rounded border border-amber-100 hover:bg-white transition-all duration-200"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 animate-pulse"></div>
+                        <div className="w-1 h-1 bg-amber-400 rounded-full mt-0.5 animate-pulse"></div>
                         <div className="flex-1">
                           <span className="font-medium text-slate-800 text-xs">
                             {n.title}
                           </span>
-                          <span className="text-slate-600 text-xs ml-2">
+                          <span className="text-slate-600 text-xs ml-1">
                             — {n.body}
                           </span>
                         </div>
@@ -260,10 +258,10 @@ export function StaffDashboard(props: {
           )}
           {/* Queue Items */}
           {paginatedRows.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl mb-6 shadow-lg">
+            <div className="text-center py-2">
+              <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-slate-100 to-slate-200 rounded mb-1 shadow-sm">
                 <svg
-                  className="w-10 h-10 text-slate-400"
+                  className="w-4 h-4 text-slate-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -276,30 +274,30 @@ export function StaffDashboard(props: {
                   />
                 </svg>
               </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-2">
+              <h3 className="text-xs font-bold text-slate-900 mb-0.5">
                 {searchTerm || filterBy !== "all"
                   ? "No students match your filters."
                   : "No pending students at your desk."}
               </h3>
-              <p className="text-slate-600 text-sm">
+              <p className="text-slate-600 text-xs">
                 Try adjusting your search or filter criteria
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-1">
               {paginatedRows.map((row, index) => (
                 <div
                   key={row.referenceId}
-                  className="group rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:border-slate-300 transition-all duration-300 bg-white transform hover:-translate-y-1"
+                  className="group rounded border border-slate-200 overflow-hidden hover:shadow-sm hover:border-slate-300 transition-all duration-300 bg-white"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="bg-gradient-to-r from-slate-50 to-white p-4 border-b border-slate-100">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="bg-gradient-to-r from-slate-50 to-white p-1 border-b border-slate-100">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl p-3 border border-slate-200">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded p-0.5 border border-slate-200">
                             <svg
-                              className="w-5 h-5 text-slate-600"
+                              className="w-2.5 h-2.5 text-slate-600"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -313,18 +311,18 @@ export function StaffDashboard(props: {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 text-sm">
+                            <p className="font-bold text-slate-900 text-xs">
                               {String(row.student?.name ?? row.studentUserId)}
                             </p>
-                            <p className="text-slate-600 font-medium">
+                            <p className="text-slate-600 font-medium text-xs">
                               ID: {String(row.student?.studentId ?? "—")}
                             </p>
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0.5 text-xs">
+                          <div className="flex items-center gap-0.5">
                             <svg
-                              className="w-4 h-4 text-slate-400"
+                              className="w-2.5 h-2.5 text-slate-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -336,13 +334,13 @@ export function StaffDashboard(props: {
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                               />
                             </svg>
-                            <span className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 font-medium text-blue-700 text-xs">
+                            <span className="inline-flex items-center bg-blue-50 border border-blue-200 rounded px-1 py-0.5 font-medium text-blue-700 text-xs">
                               Step {row.step.stepOrder}: {row.step.department}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
                             <svg
-                              className="w-4 h-4 text-slate-400"
+                              className="w-2.5 h-2.5 text-slate-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -354,14 +352,14 @@ export function StaffDashboard(props: {
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                               />
                             </svg>
-                            <span className="inline-flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono font-medium text-slate-700 text-xs">
+                            <span className="inline-flex items-center bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-mono font-medium text-slate-700 text-xs">
                               Ref: {row.referenceId}
                             </span>
                           </div>
                           {row.submittedAt && (
-                            <div className="flex items-center gap-2 sm:col-span-2">
+                            <div className="flex items-center gap-0.5 sm:col-span-2">
                               <svg
-                                className="w-4 h-4 text-slate-400"
+                                className="w-2.5 h-2.5 text-slate-400"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -380,11 +378,11 @@ export function StaffDashboard(props: {
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-3 sm:items-end">
-                        <div className="flex gap-2">
-                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 border border-amber-200 shadow-sm">
+                      <div className="flex flex-col gap-0.5 sm:items-end">
+                        <div className="flex gap-0.5">
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-1 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200 shadow-sm">
                             <svg
-                              className="w-3 h-3 mr-1 animate-pulse"
+                              className="w-1.5 h-1.5 mr-0.5 animate-pulse"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -400,9 +398,9 @@ export function StaffDashboard(props: {
                           </span>
                           {row.submittedAt &&
                             new Date(row.submittedAt) <= threeDaysAgo && (
-                              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700 border border-red-200 shadow-sm">
+                              <span className="inline-flex items-center rounded-full bg-red-100 px-1 py-0.5 text-xs font-semibold text-red-700 border border-red-200 shadow-sm">
                                 <svg
-                                  className="w-3 h-3 mr-1"
+                                  className="w-1.5 h-1.5 mr-0.5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -423,12 +421,12 @@ export function StaffDashboard(props: {
                   </div>
 
                   {/* Action Section */}
-                  <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
-                    <div className="space-y-4">
+                  <div className="p-1 bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200">
+                    <div className="space-y-1">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-semibold text-slate-700 mb-0.5">
                           <svg
-                            className="w-4 h-4 inline mr-2"
+                            className="w-2 h-2 inline mr-1"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -443,19 +441,19 @@ export function StaffDashboard(props: {
                           Comment
                         </label>
                         <textarea
-                          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 resize-none shadow-sm hover:shadow"
-                          rows={3}
+                          className="w-full rounded border border-slate-200 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 resize-none shadow-sm hover:shadow"
+                          rows={1}
                           value={staffComment}
                           onChange={(e) => setStaffComment(e.target.value)}
                           placeholder="Add any comments or notes..."
                         />
                       </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-1 sm:grid-cols-2">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 mb-0.5">
                             <svg
-                              className="w-4 h-4 inline mr-2"
+                              className="w-2 h-2 inline mr-1"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -470,16 +468,16 @@ export function StaffDashboard(props: {
                             Rejection Reason
                           </label>
                           <input
-                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow"
+                            className="w-full rounded border border-slate-200 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow"
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
                             placeholder="Reason for rejection"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          <label className="block text-xs font-semibold text-slate-700 mb-0.5">
                             <svg
-                              className="w-4 h-4 inline mr-2"
+                              className="w-2 h-2 inline mr-1"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -494,7 +492,7 @@ export function StaffDashboard(props: {
                             Instruction for Student
                           </label>
                           <input
-                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow"
+                            className="w-full rounded border border-slate-200 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow"
                             value={rejectInstruction}
                             onChange={(e) =>
                               setRejectInstruction(e.target.value)
@@ -504,14 +502,14 @@ export function StaffDashboard(props: {
                         </div>
                       </div>
 
-                      <div className="flex gap-4">
+                      <div className="flex gap-1">
                         <button
                           type="button"
-                          className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-3 text-xs font-semibold text-white hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex-1"
+                          className="group inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-emerald-600 to-green-600 px-1.5 py-0.5 text-xs font-semibold text-white hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-sm hover:shadow flex-1"
                           onClick={onApprove}
                         >
                           <svg
-                            className="w-4 h-4 group-hover:scale-110 transition-transform"
+                            className="w-2 h-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -527,11 +525,11 @@ export function StaffDashboard(props: {
                         </button>
                         <button
                           type="button"
-                          className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 px-6 py-3 text-xs font-semibold text-white hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex-1"
+                          className="group inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-red-600 to-pink-600 px-1.5 py-0.5 text-xs font-semibold text-white hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-sm hover:shadow flex-1"
                           onClick={onReject}
                         >
                           <svg
-                            className="w-4 h-4 group-hover:scale-110 transition-transform"
+                            className="w-2 h-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -555,7 +553,7 @@ export function StaffDashboard(props: {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-6">
+            <div className="flex items-center justify-between border-t border-slate-200 pt-1 mt-1">
               <div className="text-xs text-slate-600">
                 Page{" "}
                 <span className="font-semibold text-slate-900">
@@ -566,14 +564,14 @@ export function StaffDashboard(props: {
                   {totalPages}
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
+                  className="inline-flex items-center gap-0.5 rounded border border-slate-200 px-1 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
                   <svg
-                    className="w-3 h-3"
+                    className="w-2 h-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -588,7 +586,7 @@ export function StaffDashboard(props: {
                   Previous
                 </button>
                 <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
+                  className="inline-flex items-center gap-0.5 rounded border border-slate-200 px-1 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
                   onClick={() =>
                     setCurrentPage(Math.min(totalPages, currentPage + 1))
                   }
@@ -596,7 +594,7 @@ export function StaffDashboard(props: {
                 >
                   Next
                   <svg
-                    className="w-3 h-3"
+                    className="w-2 h-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

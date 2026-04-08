@@ -125,9 +125,9 @@ export function DepartmentChecklist({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {requirements.map((req) => (
-        <div key={req.id} className="flex items-start gap-3">
+        <div key={req.id} className="flex items-start gap-2">
           {req.type === "checkbox" ? (
             <>
               <input
@@ -136,9 +136,9 @@ export function DepartmentChecklist({
                 checked={!!data[req.id]}
                 onChange={(e) => handleChange(req.id, e.target.checked)}
                 disabled={disabled}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"
+                className="mt-0.5 h-3 w-3 rounded border-slate-300 text-blue-600"
               />
-              <label htmlFor={req.id} className="text-sm text-slate-700">
+              <label htmlFor={req.id} className="text-xs text-slate-700">
                 {req.label}
                 {req.required && <span className="ml-1 text-red-500">*</span>}
               </label>
@@ -147,7 +147,7 @@ export function DepartmentChecklist({
             <div className="flex-1">
               <label
                 htmlFor={req.id}
-                className="block text-sm font-medium text-slate-700"
+                className="block text-xs font-medium text-slate-700"
               >
                 {req.label}
                 {req.required && <span className="ml-1 text-red-500">*</span>}
@@ -162,14 +162,14 @@ export function DepartmentChecklist({
                 disabled={disabled}
                 min={req.validation?.min}
                 max={req.validation?.max}
-                className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
+                className="mt-0.5 w-full rounded border border-slate-200 px-2 py-1 text-xs"
               />
             </div>
           ) : req.type === "select" ? (
             <div className="flex-1">
               <label
                 htmlFor={req.id}
-                className="block text-sm font-medium text-slate-700"
+                className="block text-xs font-medium text-slate-700"
               >
                 {req.label}
                 {req.required && <span className="ml-1 text-red-500">*</span>}
@@ -179,7 +179,7 @@ export function DepartmentChecklist({
                 value={String(data[req.id] || "")}
                 onChange={(e) => handleChange(req.id, e.target.value)}
                 disabled={disabled}
-                className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
+                className="mt-0.5 w-full rounded border border-slate-200 px-2 py-1 text-xs"
               >
                 <option value="">Select...</option>
                 {req.options?.map((opt) => (
@@ -193,7 +193,7 @@ export function DepartmentChecklist({
             <div className="flex-1">
               <label
                 htmlFor={req.id}
-                className="block text-sm font-medium text-slate-700"
+                className="block text-xs font-medium text-slate-700"
               >
                 {req.label}
                 {req.required && <span className="ml-1 text-red-500">*</span>}
@@ -205,7 +205,7 @@ export function DepartmentChecklist({
                 onChange={(e) => handleChange(req.id, e.target.value)}
                 disabled={disabled}
                 pattern={req.validation?.pattern}
-                className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-sm"
+                className="mt-0.5 w-full rounded border border-slate-200 px-2 py-1 text-xs"
               />
             </div>
           )}
@@ -481,14 +481,14 @@ export function BaseDepartmentDashboard({
   };
 
   return (
-    <section className="space-y-4 rounded-xl bg-white p-5 shadow-sm">
+    <section className="space-y-2 rounded-xl bg-white p-3 shadow-sm">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-slate-900">
             {departmentConfig.name} Dashboard
           </h2>
-          <p className="text-sm text-slate-600">
+          <p className="text-xs text-slate-600">
             Step {departmentConfig.stepOrder}: {departmentConfig.description}
           </p>
         </div>
@@ -501,7 +501,7 @@ export function BaseDepartmentDashboard({
 
       {/* Notifications */}
       {notifs.length > 0 && (
-        <ul className="rounded-lg border border-slate-100 bg-slate-50/80 p-3 text-sm text-slate-700">
+        <ul className="rounded-lg border border-slate-100 bg-slate-50/80 p-2 text-xs text-slate-700">
           {notifs.slice(0, 5).map((n) => (
             <li key={n.id}>
               <span className="font-medium">{n.title}</span> — {n.body}
@@ -514,16 +514,16 @@ export function BaseDepartmentDashboard({
       {!selectedRow ? (
         <>
           {/* Filters */}
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="text"
               placeholder="Search by name, ID, or reference..."
-              className="flex-1 rounded border border-slate-200 px-3 py-2 text-sm"
+              className="flex-1 rounded border border-slate-200 px-2 py-1 text-xs"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
             <select
-              className="rounded border border-slate-200 px-3 py-2 text-sm"
+              className="rounded border border-slate-200 px-2 py-1 text-xs"
               value={filterBy}
               onChange={(e) =>
                 handleFilterChange(e.target.value as FilterOption)
@@ -534,7 +534,7 @@ export function BaseDepartmentDashboard({
               <option value="overdue">Overdue (3+ days)</option>
             </select>
             <select
-              className="rounded border border-slate-200 px-3 py-2 text-sm"
+              className="rounded border border-slate-200 px-2 py-1 text-xs"
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value as SortOption)}
             >
@@ -547,7 +547,7 @@ export function BaseDepartmentDashboard({
           {/* Empty State */}
           {paginatedRows.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-sm text-slate-600">
+              <p className="text-xs text-slate-600">
                 {searchTerm || filterBy !== "all"
                   ? "No students match your filters."
                   : "No pending students at your desk."}
@@ -571,7 +571,7 @@ export function BaseDepartmentDashboard({
                             row.studentUserId,
                         )}
                       </p>
-                      <p className="text-sm text-slate-600">
+                      <p className="text-xs text-slate-600">
                         ID: {String(row.student?.studentId ?? "—")} · Ref:{" "}
                         {row.referenceId}
                       </p>
@@ -649,7 +649,7 @@ export function BaseDepartmentDashboard({
                       selectedRow.studentUserId,
                   )}
                 </h3>
-                <p className="text-sm text-slate-600">
+                <p className="text-xs text-slate-600">
                   Student ID: {String(selectedRow.student?.studentId ?? "—")} ·
                   Reference: {selectedRow.referenceId}
                 </p>

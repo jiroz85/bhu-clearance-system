@@ -95,20 +95,20 @@ export function StudentDashboard(props: {
   }
 
   return (
-    <section className="space-y-8 animate-fadeIn">
+    <section className="space-y-4 animate-fadeIn">
       {/* Student Info Header */}
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/60 overflow-hidden hover:shadow-3xl transition-all duration-500">
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-10 py-10 border-b border-blue-100/60 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-4 py-3 border-b border-blue-100/60 relative overflow-hidden">
           {/* Animated background pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-2xl animate-pulse delay-1000"></div>
             <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-white rounded-full blur-xl animate-pulse delay-500"></div>
           </div>
-          <div className="flex items-center gap-8 relative z-10">
-            <div className="bg-white/25 backdrop-blur-xl rounded-3xl p-6 border border-white/40 shadow-2xl hover:scale-105 transition-transform duration-300">
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="bg-white/25 backdrop-blur-xl rounded-xl p-3 border border-white/40 shadow-lg hover:scale-105 transition-transform duration-300">
               <svg
-                className="w-12 h-12 text-white"
+                className="w-6 h-6 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -122,14 +122,14 @@ export function StudentDashboard(props: {
               </svg>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-white tracking-tight">
+              <h2 className="text-lg font-semibold text-white tracking-tight">
                 Student Dashboard
               </h2>
               {studentMeta && (
-                <div className="mt-6 flex flex-wrap gap-4 text-sm text-blue-100">
-                  <div className="flex items-center gap-3 bg-white/15 backdrop-blur-xl rounded-2xl px-5 py-3 shadow-xl border border-white/30 hover:bg-white/20 transition-all duration-300">
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-blue-100">
+                  <div className="flex items-center gap-2 bg-white/15 backdrop-blur-xl rounded-lg px-2 py-1 shadow-md border border-white/30 hover:bg-white/20 transition-all duration-300">
                     <svg
-                      className="w-6 h-6 text-blue-200"
+                      className="w-3 h-3 text-blue-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -141,13 +141,13 @@ export function StudentDashboard(props: {
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                       />
                     </svg>
-                    <span className="font-bold text-blue-50 text-sm">
+                    <span className="font-bold text-blue-50 text-xs">
                       {studentMeta.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 bg-white/15 backdrop-blur-xl rounded-2xl px-5 py-3 shadow-xl border border-white/30 hover:bg-white/20 transition-all duration-300">
+                  <div className="flex items-center gap-2 bg-white/15 backdrop-blur-xl rounded-lg px-2 py-1 shadow-md border border-white/30 hover:bg-white/20 transition-all duration-300">
                     <svg
-                      className="w-6 h-6 text-blue-200"
+                      className="w-3 h-3 text-blue-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -159,13 +159,13 @@ export function StudentDashboard(props: {
                         d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
                       />
                     </svg>
-                    <span className="font-bold text-blue-50 text-sm">
+                    <span className="font-bold text-blue-50 text-xs">
                       ID: {studentMeta.studentId ?? "—"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 bg-white/15 backdrop-blur-xl rounded-2xl px-5 py-3 shadow-xl border border-white/30 hover:bg-white/20 transition-all duration-300">
+                  <div className="flex items-center gap-2 bg-white/15 backdrop-blur-xl rounded-lg px-2 py-1 shadow-md border border-white/30 hover:bg-white/20 transition-all duration-300">
                     <svg
-                      className="w-6 h-6 text-blue-200"
+                      className="w-3 h-3 text-blue-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -177,13 +177,13 @@ export function StudentDashboard(props: {
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                       />
                     </svg>
-                    <span className="font-bold text-blue-50 text-sm">
+                    <span className="font-bold text-blue-50 text-xs">
                       {studentMeta.department ?? "—"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 bg-white/15 backdrop-blur-xl rounded-2xl px-5 py-3 shadow-xl border border-white/30 hover:bg-white/20 transition-all duration-300">
+                  <div className="flex items-center gap-2 bg-white/15 backdrop-blur-xl rounded-lg px-2 py-1 shadow-md border border-white/30 hover:bg-white/20 transition-all duration-300">
                     <svg
-                      className="w-6 h-6 text-blue-200"
+                      className="w-3 h-3 text-blue-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -195,7 +195,7 @@ export function StudentDashboard(props: {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    <span className="font-bold text-blue-50 text-sm">
+                    <span className="font-bold text-blue-50 text-xs">
                       Year {studentMeta.year ?? "—"}
                     </span>
                   </div>
@@ -205,12 +205,12 @@ export function StudentDashboard(props: {
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-3">
           {!clearanceId && (
-            <div className="text-center py-20">
-              <div className="inline-flex items-center justify-center w-28 h-28 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 rounded-3xl mb-10 shadow-2xl border border-blue-100/60 hover:scale-105 transition-transform duration-300">
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 via-blue-200 to-indigo-200 rounded-2xl mb-4 shadow-lg hover:scale-105 transition-transform duration-300">
                 <svg
-                  className="w-14 h-14 text-blue-700"
+                  className="w-8 h-8 text-blue-700"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -223,22 +223,22 @@ export function StudentDashboard(props: {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">
                 Start Your Clearance Process
               </h3>
-              <p className="text-slate-600 text-base mb-12 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-slate-600 text-base mb-6 max-w-2xl mx-auto leading-relaxed">
                 Begin your 13-step clearance journey to complete your university
                 requirements
               </p>
               <button
                 type="button"
-                className="group inline-flex items-center gap-4 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-12 py-6 text-base font-bold text-white hover:from-blue-700 hover:via-indigo-700 hover:to-indigo-800 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105 hover:-translate-y-2 relative overflow-hidden"
+                className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-8 py-4 text-base font-semibold text-white hover:from-blue-700 hover:via-indigo-700 hover:to-indigo-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1 relative overflow-hidden"
                 onClick={onCreateDraft}
               >
                 {/* Button shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                 <svg
-                  className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300 relative z-10"
+                  className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300 relative z-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -250,16 +250,18 @@ export function StudentDashboard(props: {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                <span className="relative z-10">Start New Clearance</span>
+                <span className="relative z-10 text-base">
+                  Start New Clearance
+                </span>
               </button>
             </div>
           )}
 
           {clearanceId && clearanceStatus === "DRAFT" && (
-            <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-200 rounded-3xl mb-8 shadow-xl hover:scale-105 transition-transform duration-300">
+            <div className="text-center py-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-200 rounded-2xl mb-4 shadow-lg hover:scale-105 transition-transform duration-300">
                 <svg
-                  className="w-12 h-12 text-amber-600"
+                  className="w-6 h-6 text-amber-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -272,16 +274,16 @@ export function StudentDashboard(props: {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4">
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">
                 Draft Clearance Ready
               </h3>
-              <div className="mb-8">
-                <p className="text-slate-600 text-base mb-3 font-semibold">
+              <div className="mb-4">
+                <p className="text-slate-600 text-base mb-2 font-medium">
                   Reference Number:
                 </p>
-                <div className="inline-flex items-center bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl px-8 py-4 shadow-lg">
+                <div className="inline-flex items-center bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg px-3 py-2 shadow-md">
                   <svg
-                    className="w-5 h-5 text-amber-600 mr-3"
+                    className="w-4 h-4 text-amber-600 mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -293,21 +295,21 @@ export function StudentDashboard(props: {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <span className="font-mono font-bold text-amber-800 text-base">
+                  <span className="font-mono font-semibold text-amber-800 text-base">
                     {referenceId}
                   </span>
                 </div>
               </div>
-              <p className="text-slate-600 text-base mb-10 max-w-2xl mx-auto">
+              <p className="text-slate-600 text-base mb-6 max-w-2xl mx-auto">
                 Submit to begin the 13-step workflow process
               </p>
               <button
                 type="button"
-                className="group inline-flex items-center gap-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 px-10 py-5 text-base font-bold text-white hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-1"
+                className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-8 py-4 text-base font-semibold text-white hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:-translate-y-1"
                 onClick={onSubmitClearance}
               >
                 <svg
-                  className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300"
+                  className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -325,22 +327,26 @@ export function StudentDashboard(props: {
           )}
 
           {clearanceStatus && clearanceStatus !== "DRAFT" && (
-            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
                 <div>
-                  <div className="text-base font-bold text-slate-900 mb-2">
+                  <div className="text-base font-semibold text-slate-900 mb-2">
                     Clearance Progress
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-600">Status:</span>
+                      <span className="text-slate-600 font-medium">
+                        Status:
+                      </span>
                       <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700 border border-blue-200">
                         {clearanceStatus}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-600">Reference:</span>
-                      <span className="inline-flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1 font-mono text-sm font-medium">
+                      <span className="text-slate-600 font-medium">
+                        Reference:
+                      </span>
+                      <span className="inline-flex items-center bg-white border border-slate-200 rounded px-3 py-1 font-mono text-sm font-medium">
                         {referenceId}
                       </span>
                     </div>
@@ -348,7 +354,7 @@ export function StudentDashboard(props: {
                 </div>
                 <div className="text-center lg:text-right">
                   <div className="inline-flex flex-col items-center lg:items-end">
-                    <div className="text-lg font-semibold text-slate-600 mb-1">
+                    <div className="text-base font-semibold text-slate-600 mb-1">
                       {progress}%
                     </div>
                     <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -359,13 +365,13 @@ export function StudentDashboard(props: {
                 </div>
               </div>
               <div className="relative">
-                <div className="w-full h-6 bg-slate-200 rounded-full overflow-hidden shadow-inner">
+                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden shadow-inner">
                   <div
                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-700 ease-out relative overflow-hidden"
                     style={{ width: `${progress}%` }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-indigo-600 animate-pulse"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg border-2 border-indigo-600 animate-pulse"></div>
                   </div>
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-slate-500">
@@ -381,9 +387,9 @@ export function StudentDashboard(props: {
       {/* Notifications */}
       {notifs.length > 0 && (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-8 py-6 border-b border-amber-100">
-            <div className="flex items-center gap-3">
-              <div className="bg-amber-600 rounded-full p-2">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 border-b border-amber-100">
+            <div className="flex items-center gap-2">
+              <div className="bg-amber-600 rounded-full p-1">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -399,34 +405,38 @@ export function StudentDashboard(props: {
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-lg font-semibold text-slate-900">
                   Notifications
                 </h3>
-                <p className="text-slate-600">Recent updates and alerts</p>
+                <p className="text-sm text-slate-600">
+                  Recent updates and alerts
+                </p>
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-3">
             <div className="space-y-4">
               {notifs.slice(0, 8).map((n) => (
                 <div
                   key={n.id}
-                  className="group rounded-xl border border-slate-100 bg-gradient-to-r from-slate-50 to-white p-5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="group rounded-lg border border-slate-100 bg-gradient-to-r from-slate-50 to-white p-3 hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="bg-slate-200 rounded-full p-2 mt-1">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-slate-200 rounded-full p-1 mt-0.5">
+                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="font-bold text-slate-900 text-sm">
+                        <p className="font-semibold text-slate-900 text-sm">
                           {n.title}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-sm text-slate-500">
                           {new Date(n.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      <p className="text-slate-600 leading-relaxed">{n.body}</p>
+                      <p className="text-slate-600 text-sm leading-relaxed">
+                        {n.body}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -442,17 +452,17 @@ export function StudentDashboard(props: {
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-8 py-6 border-b border-purple-100">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-lg font-semibold text-slate-900">
                   Clearance Progress
                 </h3>
-                <p className="text-slate-600 mt-1">
+                <p className="text-slate-600 text-sm mt-1">
                   Track your 13-step clearance journey
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   id="timeline-view-btn"
-                  className="px-4 py-2 rounded-xl bg-blue-100 text-blue-700 font-semibold transition-all duration-200"
+                  className="px-6 py-3 rounded-xl bg-blue-100 text-blue-700 font-semibold transition-all duration-200 text-base"
                   onClick={() => {
                     document
                       .querySelector(".steps-timeline")
@@ -478,7 +488,7 @@ export function StudentDashboard(props: {
                   }}
                 >
                   <svg
-                    className="w-4 h-4 inline mr-2"
+                    className="w-5 h-5 inline mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -494,7 +504,7 @@ export function StudentDashboard(props: {
                 </button>
                 <button
                   id="table-view-btn"
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition-all duration-200"
+                  className="px-6 py-3 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition-all duration-200 text-base"
                   onClick={() => {
                     document
                       .querySelector(".steps-table")
@@ -520,7 +530,7 @@ export function StudentDashboard(props: {
                   }}
                 >
                   <svg
-                    className="w-4 h-4 inline mr-2"
+                    className="w-5 h-5 inline mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -538,22 +548,22 @@ export function StudentDashboard(props: {
             </div>
           </div>
 
-          <div className="p-8">
+          <div className="p-3">
             {/* Timeline View */}
             <div className="steps-timeline">
               <div className="relative">
                 {/* Timeline Line */}
-                <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-200 to-purple-200 rounded-full"></div>
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-purple-200 rounded-full"></div>
 
                 {/* Timeline Items */}
                 {steps.map((step) => (
                   <div
                     key={step.stepOrder}
-                    className="relative flex items-start mb-8 last:mb-0"
+                    className="relative flex items-start mb-4 last:mb-0"
                   >
                     {/* Timeline Dot */}
                     <div
-                      className={`absolute left-6 w-6 h-6 rounded-full border-2 z-10 flex items-center justify-center ${
+                      className={`absolute left-3 w-4 h-4 rounded-full border-2 z-10 flex items-center justify-center ${
                         step.status === "APPROVED"
                           ? "bg-emerald-100 border-emerald-500"
                           : step.status === "REJECTED"
@@ -563,7 +573,7 @@ export function StudentDashboard(props: {
                     >
                       {step.status === "APPROVED" && (
                         <svg
-                          className="w-3 h-3 text-emerald-600"
+                          className="w-1 h-1 text-emerald-600"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -576,7 +586,7 @@ export function StudentDashboard(props: {
                       )}
                       {step.status === "REJECTED" && (
                         <svg
-                          className="w-3 h-3 text-red-600"
+                          className="w-1 h-1 text-red-600"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -588,15 +598,15 @@ export function StudentDashboard(props: {
                         </svg>
                       )}
                       {step.status === "PENDING" && (
-                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse"></div>
                       )}
                     </div>
 
                     {/* Content */}
-                    <div className="ml-16 flex-1">
-                      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-bold text-slate-900 text-base">
+                    <div className="ml-10 flex-1">
+                      <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-slate-900 text-base">
                             Step {step.stepOrder}: {step.department}
                           </h4>
                           <span
@@ -634,7 +644,7 @@ export function StudentDashboard(props: {
                             )}
                             {step.status === "PENDING" && (
                               <svg
-                                className="w-3 h-3 mr-1 animate-pulse"
+                                className="w-4 h-4 mr-2 animate-pulse"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -773,13 +783,13 @@ export function StudentDashboard(props: {
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-6 py-4 text-left text-base font-semibold text-slate-900">
                         Department
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-6 py-4 text-left text-base font-semibold text-slate-900">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                      <th className="px-6 py-4 text-left text-base font-semibold text-slate-900">
                         Comment
                       </th>
                     </tr>
@@ -790,7 +800,7 @@ export function StudentDashboard(props: {
                         key={s.stepOrder}
                         className="hover:bg-slate-50 transition-colors"
                       >
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                        <td className="px-6 py-4 text-base font-medium text-slate-900">
                           <div className="flex items-center gap-2">
                             <span className="text-slate-400">
                               {s.stepOrder}.
@@ -800,7 +810,7 @@ export function StudentDashboard(props: {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${badgeClass(s.status)}`}
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${badgeClass(s.status)}`}
                           >
                             {s.status === "APPROVED" && (
                               <svg
@@ -834,7 +844,7 @@ export function StudentDashboard(props: {
                             )}
                             {s.status === "PENDING" && (
                               <svg
-                                className="w-3 h-3 mr-1 animate-pulse"
+                                className="w-4 h-4 mr-2 animate-pulse"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -850,7 +860,7 @@ export function StudentDashboard(props: {
                             {s.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-700">
+                        <td className="px-6 py-4 text-base text-slate-700">
                           {s.comment || "—"}
                         </td>
                       </tr>
@@ -861,62 +871,16 @@ export function StudentDashboard(props: {
             </div>
 
             {/* Action Section */}
-            <div className="mt-8 bg-slate-50 rounded-xl p-6 border border-slate-200">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
+            <div className="mt-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200 shadow-lg">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-4">
                   <label
                     htmlFor="recheck-msg"
-                    className="block text-sm font-semibold text-slate-700 mb-2"
+                    className="flex items-center text-lg font-semibold text-slate-700 mb-4"
                   >
-                    <svg
-                      className="w-4 h-4 inline mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    Resubmission Message
-                  </label>
-                  <textarea
-                    id="recheck-msg"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-                    rows={4}
-                    value={recheckMessage}
-                    onChange={(e) => setRecheckMessage(e.target.value)}
-                    placeholder="Describe what you have fixed or submitted (e.g., 'I have submitted my room key to the dormitory office')..."
-                    disabled={!rejectedStep}
-                  />
-                  <button
-                    type="button"
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
-                    disabled={!rejectedStep || !recheckMessage.trim()}
-                    onClick={onSubmitRecheck}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                    Submit Resubmission
-                  </button>
-                  {rejectedStep && (
-                    <p className="mt-2 text-sm text-slate-500">
+                    <div className="bg-blue-100 rounded-lg p-2 mr-3">
                       <svg
-                        className="w-4 h-4 inline mr-1"
+                        className="w-6 h-6 text-blue-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -925,40 +889,114 @@ export function StudentDashboard(props: {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                         />
                       </svg>
-                      Click the "Resubmit" button above any rejected step to
-                      auto-fill this message
-                    </p>
-                  )}
+                    </div>
+                    Resubmission Message
+                  </label>
+                  <textarea
+                    id="recheck-msg"
+                    className="w-full rounded-xl border border-slate-300 px-5 py-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none shadow-sm hover:shadow-md bg-white"
+                    rows={4}
+                    value={recheckMessage}
+                    onChange={(e) => setRecheckMessage(e.target.value)}
+                    placeholder="Describe what you have fixed or submitted (e.g., 'I have submitted my room key to the dormitory office')..."
+                    disabled={!rejectedStep}
+                  />
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-4 text-base font-semibold text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      disabled={!rejectedStep || !recheckMessage.trim()}
+                      onClick={onSubmitRecheck}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                      Submit Resubmission
+                    </button>
+                    {rejectedStep && (
+                      <p className="text-sm text-slate-500 max-w-xs">
+                        <svg
+                          className="w-4 h-4 inline mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Click "Resubmit" above to auto-fill
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-center">
-                  <button
-                    type="button"
-                    className={`inline-flex items-center gap-3 rounded-xl px-8 py-4 text-lg font-semibold text-white transition-all duration-200 shadow-lg hover:shadow-xl ${
-                      canCert
-                        ? "bg-emerald-600 hover:bg-emerald-700"
-                        : "cursor-not-allowed bg-slate-400"
-                    }`}
-                    disabled={!canCert}
-                    onClick={onDownloadCertificatePdf}
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    Download Certificate (PDF)
-                  </button>
+                  <div className="text-center space-y-4">
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-2xl p-8 border border-emerald-200">
+                      <div className="bg-emerald-600 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-lg">
+                        <svg
+                          className="w-10 h-10 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <h4 className="text-xl font-bold text-slate-900 mb-2">
+                        Download Your Certificate
+                      </h4>
+                      <p className="text-slate-600 mb-6">
+                        Get your official clearance certificate
+                      </p>
+                      <button
+                        type="button"
+                        className={`inline-flex items-center gap-4 rounded-xl px-10 py-5 text-xl font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                          canCert
+                            ? "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+                            : "cursor-not-allowed bg-slate-400"
+                        }`}
+                        disabled={!canCert}
+                        onClick={onDownloadCertificatePdf}
+                      >
+                        <svg
+                          className="w-7 h-7"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Download Certificate (PDF)
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

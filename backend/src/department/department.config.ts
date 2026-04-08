@@ -696,12 +696,6 @@ export const DEPARTMENT_CONFIGS: Record<string, DepartmentConfig> = {
         placeholder: 'Number of hours completed',
       },
       {
-        key: 'cepCertificate',
-        label: 'CEP Certificate Submitted',
-        type: 'file',
-        required: true,
-      },
-      {
         key: 'communityFeedback',
         label: 'Community Feedback',
         type: 'select',
