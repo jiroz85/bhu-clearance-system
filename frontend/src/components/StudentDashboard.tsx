@@ -717,38 +717,19 @@ export function StudentDashboard(props: {
                           </div>
                         )}
 
-                        {/* Resubmit button for rejected steps */}
                         {step.status === "REJECTED" && (
-                          <div className="mt-4">
-                            <button
-                              type="button"
-                              className="group inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
-                              onClick={() => {
-                                // Scroll to re-check section and pre-fill with step-specific message
-                                document
-                                  .getElementById("recheck-msg")
-                                  ?.scrollIntoView({ behavior: "smooth" });
-                                setRecheckMessage(
-                                  `Resubmitted for ${step.department}: I have submitted the required items/documents.`,
-                                );
-                              }}
-                            >
-                              <svg
-                                className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
-                              </svg>
-                              Resubmit for {step.department}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            onClick={() => {
+                              document.getElementById("recheck-msg")?.focus();
+                              setRecheckMessage(
+                                `Resubmitted for ${step.department}: Required documents submitted.`,
+                              );
+                            }}
+                          >
+                            Resubmit →
+                          </button>
                         )}
 
                         {/* Pending indicator */}
@@ -871,48 +852,48 @@ export function StudentDashboard(props: {
             </div>
 
             {/* Action Section */}
-            <div className="mt-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-8 border border-slate-200 shadow-lg">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-4">
+            <div className="mt-6 bg-white border border-slate-200 rounded-lg p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Resubmission Section */}
+                <div>
                   <label
                     htmlFor="recheck-msg"
-                    className="flex items-center text-lg font-semibold text-slate-700 mb-4"
+                    className="block text-sm font-medium text-slate-700 mb-2"
                   >
-                    <div className="bg-blue-100 rounded-lg p-2 mr-3">
-                      <svg
-                        className="w-6 h-6 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                      </svg>
-                    </div>
                     Resubmission Message
                   </label>
                   <textarea
                     id="recheck-msg"
-                    className="w-full rounded-xl border border-slate-300 px-5 py-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none shadow-sm hover:shadow-md bg-white"
-                    rows={4}
+                    className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
                     value={recheckMessage}
                     onChange={(e) => setRecheckMessage(e.target.value)}
                     placeholder="Describe what you have fixed or submitted (e.g., 'I have submitted my room key to the dormitory office')..."
                     disabled={!rejectedStep}
                   />
-                  <div className="flex items-center justify-between">
+                  <div className="mt-3 flex items-center justify-between">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-4 text-base font-semibold text-white hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!rejectedStep || !recheckMessage.trim()}
                       onClick={onSubmitRecheck}
                     >
+                      Submit Resubmission
+                    </button>
+                    {rejectedStep && (
+                      <span className="text-xs text-slate-500">
+                        Click "Resubmit" above to auto-fill
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Certificate Section */}
+                <div className="text-center">
+                  <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                    <div className="bg-emerald-600 rounded-full p-2 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                       <svg
-                        className="w-5 h-5"
+                        className="w-6 h-6 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -921,81 +902,41 @@ export function StudentDashboard(props: {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         />
                       </svg>
-                      Submit Resubmission
-                    </button>
-                    {rejectedStep && (
-                      <p className="text-sm text-slate-500 max-w-xs">
-                        <svg
-                          className="w-4 h-4 inline mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        Click "Resubmit" above to auto-fill
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-2xl p-8 border border-emerald-200">
-                      <div className="bg-emerald-600 rounded-full p-4 w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-lg">
-                        <svg
-                          className="w-10 h-10 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                      </div>
-                      <h4 className="text-xl font-bold text-slate-900 mb-2">
-                        Download Your Certificate
-                      </h4>
-                      <p className="text-slate-600 mb-6">
-                        Get your official clearance certificate
-                      </p>
-                      <button
-                        type="button"
-                        className={`inline-flex items-center gap-4 rounded-xl px-10 py-5 text-xl font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                          canCert
-                            ? "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
-                            : "cursor-not-allowed bg-slate-400"
-                        }`}
-                        disabled={!canCert}
-                        onClick={onDownloadCertificatePdf}
-                      >
-                        <svg
-                          className="w-7 h-7"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        Download Certificate (PDF)
-                      </button>
                     </div>
+                    <h4 className="text-base font-semibold text-slate-900 mb-1">
+                      Download Your Certificate
+                    </h4>
+                    <p className="text-xs text-slate-600 mb-3">
+                      Get your official clearance certificate
+                    </p>
+                    <button
+                      type="button"
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white ${
+                        canCert
+                          ? "bg-emerald-600 hover:bg-emerald-700"
+                          : "bg-slate-400 cursor-not-allowed"
+                      }`}
+                      disabled={!canCert}
+                      onClick={onDownloadCertificatePdf}
+                    >
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      Download Certificate (PDF)
+                    </button>
                   </div>
                 </div>
               </div>
