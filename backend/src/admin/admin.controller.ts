@@ -41,13 +41,8 @@ export class AdminController {
     @CurrentUser('userId') actorId: string,
     @Body() dto: AdminCreateUserDto,
   ) {
-    console.log(
-      'DEBUG: Create user DTO received:',
-      JSON.stringify(dto, null, 2),
-    );
     try {
       const result = await this.admin.createUser(dto, actorId);
-      console.log('DEBUG: User created successfully:', result.id);
       return result;
     } catch (error) {
       console.error('DEBUG: Error creating user:', error);
@@ -73,9 +68,6 @@ export class AdminController {
 
       // Log performance metrics
       const processingTime = endTime - startTime;
-      console.log(
-        `Reports summary generated in ${processingTime}ms for university: ${universityId}`,
-      );
 
       // Add performance metadata to response
       return {

@@ -3,11 +3,13 @@
 ## 🚀 Quick Start with Docker
 
 ### Prerequisites
+
 - Docker and Docker Compose installed
 - At least 4GB RAM available
 - Ports 3000, 3001, and 5432 available
 
 ### Development Setup
+
 ```bash
 # Clone and navigate to project
 git clone <repository-url>
@@ -24,6 +26,7 @@ docker-compose down
 ```
 
 ### Access Points
+
 - **Frontend**: http://localhost:3001
 - **Backend API**: http://localhost:3000
 - **Health Check**: http://localhost:3000/health
@@ -32,6 +35,7 @@ docker-compose down
 ## 📋 Service Details
 
 ### Services Included
+
 1. **PostgreSQL Database** (Port 5432)
    - Official PostgreSQL 16 Alpine image
    - Persistent data storage
@@ -49,6 +53,7 @@ docker-compose down
    - Volume mounted for live editing
 
 ### Health Checks
+
 - **Database**: `pg_isready` command
 - **Backend**: HTTP health endpoint
 - **Automatic**: Service dependencies enforced
@@ -56,6 +61,7 @@ docker-compose down
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```bash
 # Backend Configuration
 NODE_ENV=production
@@ -69,7 +75,9 @@ VITE_API_URL=http://localhost:3000
 ```
 
 ### Database Setup
+
 The system automatically:
+
 - Creates the database on first run
 - Runs Prisma migrations
 - Sets up proper tables and indexes
@@ -77,6 +85,7 @@ The system automatically:
 ## 🏥 Health Monitoring
 
 ### Health Endpoints
+
 ```bash
 # Basic health check
 curl http://localhost:3000/health
@@ -89,6 +98,7 @@ curl http://localhost:3000/health | jq '.database'
 ```
 
 ### Health Check Response
+
 ```json
 {
   "status": "healthy",
@@ -106,6 +116,7 @@ curl http://localhost:3000/health | jq '.database'
 ## 🐳 Docker Commands
 
 ### Development
+
 ```bash
 # Start all services
 docker-compose up -d
@@ -124,6 +135,7 @@ docker-compose exec postgres psql -U bhu -d bhu_clearance
 ```
 
 ### Production
+
 ```bash
 # Production build
 docker-compose -f docker-compose.prod.yml up -d
@@ -138,6 +150,7 @@ docker-compose up -d --no-deps backend
 ## 🔒 Security Considerations
 
 ### Production Checklist
+
 - [ ] Change default database passwords
 - [ ] Set strong JWT secret
 - [ ] Configure email provider
@@ -147,7 +160,9 @@ docker-compose up -d --no-deps backend
 - [ ] Monitor logs and metrics
 
 ### Security Headers
+
 The application includes:
+
 - CORS protection
 - Rate limiting
 - Input validation
@@ -157,6 +172,7 @@ The application includes:
 ## 📊 Monitoring
 
 ### Logs
+
 ```bash
 # Application logs
 docker-compose logs -f backend
@@ -169,6 +185,7 @@ docker-compose logs -f
 ```
 
 ### Metrics Available
+
 - Response times
 - Database performance
 - Error rates
@@ -178,12 +195,14 @@ docker-compose logs -f
 ## 🚀 Production Deployment
 
 ### Option 1: Docker Compose (Simple)
+
 ```bash
 # Production compose file
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Option 2: Kubernetes
+
 ```bash
 # Apply Kubernetes manifests
 kubectl apply -f k8s/
@@ -193,6 +212,7 @@ kubectl get pods -l app=bhu-clearance
 ```
 
 ### Option 3: Cloud Services
+
 - **AWS**: ECS/RDS + ALB
 - **Google Cloud**: GKE + Cloud SQL
 - **Azure**: AKS + Azure Database
@@ -201,6 +221,7 @@ kubectl get pods -l app=bhu-clearance
 ## 🔄 Backup Strategy
 
 ### Database Backup
+
 ```bash
 # Manual backup
 docker-compose exec postgres pg_dump -U bhu bhu_clearance > backup.sql
@@ -210,6 +231,7 @@ docker-compose exec postgres pg_dump -U bhu bhu_clearance > backup.sql
 ```
 
 ### Data Persistence
+
 - Database data persisted in Docker volume
 - File uploads persisted in mounted volume
 - Configuration in environment variables
@@ -217,12 +239,14 @@ docker-compose exec postgres pg_dump -U bhu bhu_clearance > backup.sql
 ## 🛠️ Troubleshooting
 
 ### Common Issues
+
 1. **Port conflicts**: Change ports in docker-compose.yml
 2. **Database connection**: Check PostgreSQL health status
 3. **Build failures**: Clear Docker cache: `docker system prune`
 4. **Memory issues**: Increase Docker memory allocation
 
 ### Debug Commands
+
 ```bash
 # Check service status
 docker-compose ps
@@ -240,11 +264,13 @@ docker-compose restart backend
 ## 📚 Additional Resources
 
 ### Documentation
+
 - [API Documentation](http://localhost:3000/api/docs)
-- [Database Schema](./database/schema.sql)
+- Database schema is managed via Prisma (`backend/prisma/schema.prisma`) and migrations (`backend/prisma/migrations`).
 - [Architecture Guide](./docs/architecture.md)
 
 ### Support
+
 - Check logs for error messages
 - Verify environment variables
 - Ensure all services are healthy

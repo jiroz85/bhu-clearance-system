@@ -206,14 +206,6 @@ async function main() {
     },
   });
 
-  console.log('Seeded users:');
-  console.log(`  ADMIN   ${adminEmail} / ${adminPassword}`);
-  console.log(`  STUDENT ${studentEmail} / ${studentPassword}`);
-  console.log(`  STAFF   ${libraryEmail} / ${libraryPassword} (Library)`);
-  console.log(
-    `  STAFF   ${deptHeadEmail} / ${deptHeadPassword} (Department Head)`,
-  );
-
   await prisma.$disconnect();
 }
 

@@ -48,8 +48,6 @@ export class DepartmentService {
         throw new NotFoundException(`Department ${departmentName} not found`);
       }
 
-      console.log(`Getting queue for department: ${departmentName}`, filters);
-
       // Get clearances where this department is the CURRENT active step
       // Include both SUBMITTED and PAUSED_REJECTED clearances to handle resubmissions
       const clearances = await this.prisma.clearance.findMany({
@@ -102,10 +100,6 @@ export class DepartmentService {
         take: 50,
       });
 
-      console.log(
-        `Found ${clearances.length} clearances for department ${departmentName}`,
-      );
-
       // Filter to only show clearances where this department's step is the CURRENT active step
       const queue = clearances
         .map((clearance) => {
@@ -118,9 +112,6 @@ export class DepartmentService {
 
           // CRITICAL: Only show if this department's step is the CURRENT active step
           if (step.stepOrder !== clearance.currentStepOrder) {
-            console.log(
-              `Step ${step.stepOrder} for clearance ${clearance.referenceId} is not current (current: ${clearance.currentStepOrder})`,
-            );
             return null;
           }
 
@@ -135,9 +126,6 @@ export class DepartmentService {
           // For step 1, no previous steps to check
           const isValidStep = step.stepOrder === 1 || allPrevApproved;
           if (!isValidStep) {
-            console.log(
-              `Previous steps not all approved for clearance ${clearance.referenceId}`,
-            );
             return null;
           }
 
@@ -148,9 +136,6 @@ export class DepartmentService {
               review.comment?.startsWith('Resubmitted:'),
           );
 
-          console.log(
-            `Including current active step ${step.stepOrder} for clearance ${clearance.referenceId} (Status: ${step.status}, Resubmitted: ${isResubmitted})`,
-          );
           return {
             id: clearance.id,
             referenceId: clearance.referenceId,
@@ -171,9 +156,6 @@ export class DepartmentService {
         })
         .filter((item) => item !== null);
 
-      console.log(
-        `Returning ${queue.length} queue items for department ${departmentName}`,
-      );
       return queue;
     } catch (error) {
       console.error('Error in getDepartmentQueue:', error);
@@ -186,8 +168,6 @@ export class DepartmentService {
     timeframe?: 'day' | 'week' | 'month' | 'all',
   ) {
     try {
-      console.log(`Getting real metrics for department: ${departmentName}`);
-
       // First, let's debug: get ALL steps for this department without timeframe filter
       const allSteps = await this.prisma.clearanceStep.findMany({
         where: {
@@ -204,22 +184,6 @@ export class DepartmentService {
           },
         },
       });
-
-      console.log(
-        `DEBUG: Found ${allSteps.length} total steps for department ${departmentName}`,
-      );
-      if (allSteps.length > 0) {
-        console.log(
-          'DEBUG: Sample steps:',
-          allSteps.slice(0, 3).map((s) => ({
-            id: s.id,
-            department: s.department,
-            status: s.status,
-            clearanceSubmittedAt: s.clearance.submittedAt,
-            clearanceStatus: s.clearance.status,
-          })),
-        );
-      }
 
       // Calculate date filter based on timeframe
       const now = new Date();
@@ -242,10 +206,6 @@ export class DepartmentService {
         default:
           startDate.setDate(now.getDate() - 7);
       }
-
-      console.log(
-        `DEBUG: Using timeframe ${timeframe || 'week'}, startDate: ${startDate.toISOString()}`,
-      );
 
       // Get all steps for this department within the timeframe
       const steps = await this.prisma.clearanceStep.findMany({
@@ -281,10 +241,6 @@ export class DepartmentService {
           },
         },
       });
-
-      console.log(
-        `Found ${steps.length} steps for department ${departmentName} in timeframe`,
-      );
 
       // Calculate metrics
       const total = steps.length;
@@ -336,7 +292,6 @@ export class DepartmentService {
         },
       };
 
-      console.log(`Calculated metrics for ${departmentName}:`, metrics.summary);
       return metrics;
     } catch (error) {
       console.error('Error in getDepartmentMetrics:', error);
@@ -462,7 +417,6 @@ export class DepartmentService {
   ) {
     // Log department data if provided (for future use)
     if (departmentData) {
-      console.log('Department data provided for resubmission:', departmentData);
     }
 
     // Find the step and verify ownership

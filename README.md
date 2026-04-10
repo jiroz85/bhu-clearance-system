@@ -6,7 +6,7 @@ Full-stack starter implementation for the Bule Hora University digital student c
 
 - Frontend: React + TypeScript + Tailwind CSS (Vite)
 - Backend: NestJS + TypeScript
-- Database design: PostgreSQL schema in `database/schema.sql`
+- Database: PostgreSQL (managed via Prisma migrations in `backend/prisma`)
 
 ## Implemented
 
@@ -17,7 +17,7 @@ Full-stack starter implementation for the Bule Hora University digital student c
 - Re-check request flow
 - Admin user creation, override action, and summary report endpoint
 - Certificate generation rule (only after full clearance)
-- Comprehensive PostgreSQL schema with RBAC, notifications, certificates, and audit logs
+- Prisma schema + migrations for core domain, notifications, audit logs, certificates
 
 ## Run backend
 
@@ -54,18 +54,10 @@ Frontend URL: `http://localhost:5173`
 
 ## Database
 
-Apply schema on PostgreSQL:
+Use Prisma migrations (recommended):
 
 ```bash
-psql -U <user> -d <db_name> -f database/schema.sql
+cd backend
+npm run db:migrate
+npm run db:seed
 ```
-
-The schema includes:
-- all core clearance tables
-- strict workflow enforcement trigger
-- seeded BHU departments and 13 ordered steps
-
-## Next production step
-
-Replace in-memory backend service storage with Prisma repositories mapped to the schema in `database/schema.sql`.
-
