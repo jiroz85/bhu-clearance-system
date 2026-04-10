@@ -95,10 +95,6 @@ export function useDepartmentDashboard(
       const metricsData = metricsRes?.data?.data || metricsRes?.data;
       const notifsData = notifsRes?.data?.data || notifsRes?.data;
 
-      // Debug: Log what we received
-      console.log("DEBUG: Raw metrics response:", metricsRes);
-      console.log("DEBUG: Parsed metrics data:", metricsData);
-
       if (configData) setConfig(configData);
       if (queueData) setPendingRows(Array.isArray(queueData) ? queueData : []);
       if (metricsData) setMetrics(metricsData);

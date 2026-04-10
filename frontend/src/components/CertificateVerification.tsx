@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../api";
 
 interface VerificationResult {
   certificateNumber: string;
@@ -36,8 +36,8 @@ const CertificateVerification: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.get(
-        `http://localhost:3000/api/certificate/verify/${certificateNumber}`,
+      const response = await api.get(
+        `/certificate/verify/${certificateNumber}`,
       );
       // Handle wrapped response format
       const data = response.data.data || response.data;
@@ -69,8 +69,8 @@ const CertificateVerification: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const response = await axios.post(
-        `http://localhost:3000/api/certificate/verify/${certificateNumber}/file`,
+      const response = await api.post(
+        `/certificate/verify/${certificateNumber}/file`,
         formData,
         {
           headers: {

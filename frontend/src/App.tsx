@@ -139,7 +139,6 @@ function App() {
         : { email: loginEmail.trim(), password: loginPassword };
 
       const { data } = await api.post(endpoint, payload);
-      console.log("Login response:", data); // Debug: see actual response structure
 
       // API returns wrapped response: { success, data: { access_token, user } }
       const responseData = data.data || data;
@@ -180,7 +179,6 @@ function App() {
         axiosError.response?.data?.message ||
         axiosError.message ||
         "Unknown error";
-      console.error("Login error:", errorMsg, e);
       setError(`Login failed: ${errorMsg}`);
     } finally {
       setLoading(false);

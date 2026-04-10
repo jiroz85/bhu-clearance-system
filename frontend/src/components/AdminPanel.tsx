@@ -179,7 +179,6 @@ export function AdminPanel(props: {
     setUsersLoading(true);
     setUsersError(null);
     try {
-      const startTime = Date.now();
       const params = new URLSearchParams({
         skip: skip.toString(),
         take: take.toString(),
@@ -192,8 +191,6 @@ export function AdminPanel(props: {
       const { data } = await api.get<UsersResponse>(`/admin/users?${params}`);
       setUsers(data.data?.users || []);
       setUsersTotal(data.data?.total || 0);
-      const endTime = Date.now();
-      console.log(`Users loaded in ${endTime - startTime}ms`);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load users";
@@ -207,15 +204,12 @@ export function AdminPanel(props: {
     // Cache for 2 minutes to reduce server load while keeping data fresh
     const now = Date.now();
     if (reportsData && now - lastReportsFetch < 120000) {
-      console.log("Using cached reports data");
       return;
     }
 
     setReportsLoading(true);
     setReportsError(null);
     try {
-      const startTime = Date.now();
-
       // Add progress simulation for better UX
       const progressTimeout = setTimeout(() => {
         setReportsError(
@@ -225,9 +219,6 @@ export function AdminPanel(props: {
 
       const { data } = await api.get("/admin/reports/summary");
       clearTimeout(progressTimeout);
-
-      const endTime = Date.now();
-      console.log(`Reports loaded in ${endTime - startTime}ms`);
 
       // Handle wrapped response: { data: { ... } }
       const reportsResponse = data.data || data;
@@ -256,12 +247,7 @@ export function AdminPanel(props: {
 
   const handleCreateUser = async () => {
     try {
-      console.log(
-        "DEBUG: Sending form data:",
-        JSON.stringify(formData, null, 2),
-      );
       await api.post("/admin/users", formData);
-      console.log("DEBUG: User creation successful");
       setShowCreateForm(false);
       setFormData({
         email: "",
