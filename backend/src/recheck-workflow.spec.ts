@@ -165,7 +165,7 @@ describe('Clearance Recheck Workflow', () => {
         service.requestRecheck(
           'student-1',
           'clearance-1',
-          4,
+          '4',
           'I have submitted the room key',
         ),
       ).rejects.toThrow(
@@ -206,7 +206,7 @@ describe('Clearance Recheck Workflow', () => {
         service.requestRecheck(
           'student-1',
           'clearance-1',
-          4,
+          '4',
           'I have submitted the room key',
         ),
       ).rejects.toThrow('Re-check is only for rejected steps');

@@ -87,6 +87,8 @@ type BulkImportUserDto = {
   studentUniversityId?: string;
   studentDepartment?: string;
   studentYear?: string;
+  password?: string;
+  status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
 };
 
 export function AdminPanel(props: {
@@ -341,6 +343,15 @@ export function AdminPanel(props: {
                 case "studentyear":
                 case "student_year":
                   user.studentYear = value;
+                  break;
+                case "password":
+                  user.password = value;
+                  break;
+                case "status":
+                  user.status = value.toUpperCase() as
+                    | "ACTIVE"
+                    | "INACTIVE"
+                    | "SUSPENDED";
                   break;
               }
             });

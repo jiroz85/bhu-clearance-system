@@ -13,7 +13,7 @@ Thank you for your interest in contributing to the Bule Hora University Student 
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-username/bhu-clearance-system.git
+git clone https://github.com/jiroz85/bhu-clearance-system.git
 cd bhu-clearance-system
 ```
 

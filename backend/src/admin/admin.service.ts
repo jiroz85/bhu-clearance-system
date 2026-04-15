@@ -351,6 +351,7 @@ export class AdminService {
           studentUniversityId: userDto.studentUniversityId,
           studentDepartment: userDto.studentDepartment,
           studentYear: userDto.studentYear,
+          status: userDto.status,
         };
 
         await this.createUser(createUserDto, actorUserId);
