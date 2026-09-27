@@ -1,4 +1,4 @@
-# BHU Student Clearance System
+# Bule Hora University Student Clearance System
 A full-stack digital student clearance management system for Bule Hora University, designed to streamline clearance workflows between students, departments, and administrators.
 
 ## Stack
